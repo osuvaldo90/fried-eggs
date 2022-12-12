@@ -33,11 +33,41 @@ const crunchPeriods = (periodHistory: Period[]) => {
   }
 }
 
+const calculateDangerZone = (periodHistory: Period[]) => {
+  const lastPeriod = last(periodHistory)
+  if (!lastPeriod) return undefined
+
+  const start = addDays(lastPeriod.date, 7)
+  const end = addDays(start, 7)
+  return { start, end }
+}
+
+const formatDate = (date: Date) => format(date, 'MMMM do')
+
 const App = ({ periodHistory }: { periodHistory: Period[] }) => {
   const statistics = crunchPeriods(periodHistory)
+  const dangerZone = calculateDangerZone(periodHistory)
+  const lastPeriod = last(periodHistory)
 
   return (
     <>
+      {lastPeriod && dangerZone && (
+        <Row>
+          <Col>
+            <p>
+              Your last period was on <span className="fw-bold">{formatDate(lastPeriod.date)}</span>
+              .
+            </p>
+            <p className="text-danger">
+              Your danger zone is{' '}
+              <span className="fw-bold">
+                {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
+              </span>
+              .
+            </p>
+          </Col>
+        </Row>
+      )}
       {statistics && (
         <Row>
           <Col>
@@ -54,7 +84,7 @@ const App = ({ periodHistory }: { periodHistory: Period[] }) => {
             <p>
               Your next period may start on
               <br />
-              <span className="fw-bold">{format(statistics.nextCycleStart, 'MMMM do, yyyy')}</span>
+              <span className="fw-bold">{formatDate(statistics.nextCycleStart)}</span>
             </p>
           </Col>
         </Row>
