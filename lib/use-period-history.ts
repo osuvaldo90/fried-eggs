@@ -14,14 +14,14 @@ type Action =
       period: Period
     }
 
-export type PushPeriod = (newPeriod: Omit<Period, 'id'>) => void
+export type AddPeriod = (newPeriod: Omit<Period, 'id'>) => void
 
 type JsonPeriod = {
   id: string
   date: string
 }
 
-export const usePeriodHistory = (): readonly [Period[], PushPeriod] => {
+export const usePeriodHistory = (): readonly [Period[], AddPeriod] => {
   const [periodHistory, updatePeriodHistory] = useReducer<Reducer<Period[], Action>, undefined>(
     (current, action) => {
       if (action.type === 'load') {

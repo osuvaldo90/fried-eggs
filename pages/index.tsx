@@ -17,7 +17,7 @@ const median = (nums: number[]) => {
 }
 
 const crunchPeriods = (periodHistory: Period[]) => {
-  if (periodHistory.length === 0) return undefined
+  if (periodHistory.length <= 1) return undefined
 
   const cycleLengths = _(zip(periodHistory.slice(0, -1), periodHistory.slice(1)))
     .map(([a, b]) => differenceInDays(b!.date, a!.date))

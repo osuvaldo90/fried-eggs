@@ -14,13 +14,13 @@ const offset = () => {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [periodHistory, pushPeriod] = usePeriodHistory()
+  const [periodHistory, addPeriod] = usePeriodHistory()
   const { pathname } = useRouter()
 
   const generatePeriodData = () => {
     const first = subDays(new Date(), 12 * 28)
     for (let i = 0; i < 14; i++) {
-      pushPeriod({ date: addDays(first, i * (28 - offset())) })
+      addPeriod({ date: addDays(first, i * (28 - offset())) })
     }
   }
 
@@ -59,7 +59,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </Col>
         </Row>
 
-        <Component {...pageProps} periodHistory={periodHistory} pushPeriod={pushPeriod} />
+        <Component {...pageProps} periodHistory={periodHistory} addPeriod={addPeriod} />
 
         <Row className="mt-4">
           <Col className="d-grid gap-1">

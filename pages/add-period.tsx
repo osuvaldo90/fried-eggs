@@ -4,7 +4,7 @@ import { Col, Row } from 'react-bootstrap'
 import * as yup from 'yup'
 
 import { RecordPeriodForm, RecordPeriodFormValues } from '../lib/components/RecordPeriodForm'
-import { PushPeriod } from '../lib/use-period-history'
+import { AddPeriod } from '../lib/use-period-history'
 
 const validationSchema = yup.object({
   periodDate: yup
@@ -18,13 +18,12 @@ const validationSchema = yup.object({
     }),
 })
 
-const AddPeriod = ({ pushPeriod }: { pushPeriod: PushPeriod }) => {
+const AddPeriod = ({ addPeriod }: { addPeriod: AddPeriod }) => {
   const handleSubmit = (
     { periodDate }: RecordPeriodFormValues,
     { setSubmitting, resetForm }: FormikHelpers<RecordPeriodFormValues>,
   ) => {
-    console.log(typeof periodDate, periodDate)
-    pushPeriod({ date: parse(periodDate, 'yyyy-MM-dd', new Date()) })
+    addPeriod({ date: parse(periodDate, 'yyyy-MM-dd', new Date()) })
     resetForm()
     setSubmitting(false)
   }
