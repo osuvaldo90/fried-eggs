@@ -1,29 +1,9 @@
-import { addDays, differenceInDays, format, parse, subDays } from 'date-fns'
-import { Formik, FormikHelpers } from 'formik'
+import { addDays, differenceInDays, format } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
-import { Accordion, Button, Col, Container, ListGroup, Row } from 'react-bootstrap'
-import * as yup from 'yup'
+import Link from 'next/link'
+import { Button, Col, Container, Row } from 'react-bootstrap'
 
-import { RecordPeriodForm, RecordPeriodFormValues } from '../lib/components/RecordPeriodForm'
 import { Period } from '../lib/types'
-import { usePeriodHistory } from '../lib/use-period-history'
-
-const offset = () => {
-  const x = Math.random()
-  return x <= 0.33 ? 0 : x <= 0.67 ? 1 : 2
-}
-
-const validationSchema = yup.object({
-  periodDate: yup
-    .date()
-    .required('Enter a date')
-    .test((val, context) => {
-      if ((val?.getFullYear() ?? 10000) >= 10000) {
-        return context.createError({ message: 'Enter a valid date' })
-      }
-      return true
-    }),
-})
 
 const median = (nums: number[]) => {
   if (nums.length === 0) return 0
@@ -54,103 +34,33 @@ const crunchPeriods = (periodHistory: Period[]) => {
   }
 }
 
-const App = () => {
-  const [periodHistory, pushPeriod] = usePeriodHistory()
-
-  const handleSubmit = (
-    { periodDate }: RecordPeriodFormValues,
-    { setSubmitting, resetForm }: FormikHelpers<RecordPeriodFormValues>,
-  ) => {
-    console.log(typeof periodDate, periodDate)
-    pushPeriod({ date: parse(periodDate, 'yyyy-MM-dd', new Date()) })
-    resetForm()
-    setSubmitting(false)
-  }
-
-  const generatePeriodData = () => {
-    const first = subDays(new Date(), 12 * 28)
-    for (let i = 0; i < 14; i++) {
-      pushPeriod({ date: addDays(first, i * (28 - offset())) })
-    }
-  }
-
+const App = ({ periodHistory }: { periodHistory: Period[] }) => {
   const statistics = crunchPeriods(periodHistory)
 
   return (
-    <Container>
-      <Row className="mt-4">
-        <Col>
-          <Accordion defaultActiveKey={statistics ? 'statistics' : 'recordPeriod'}>
-            {statistics && (
-              <Accordion.Item eventKey="statistics">
-                <Accordion.Header>Statistics</Accordion.Header>
-                <Accordion.Body>
-                  <p>
-                    Your average cycle length is
-                    <br />
-                    <span className="fw-bold">{statistics.averageCycleLength} days</span>
-                  </p>
-                  <p>
-                    Your median cycle length is
-                    <br />
-                    <span className="fw-bold">{statistics.medianCycleLength} days</span>
-                  </p>
-                  <p>
-                    Your next period may start on
-                    <br />
-                    <span className="fw-bold">
-                      {format(statistics.nextCycleStart, 'MMMM do, yyyy')}
-                    </span>
-                  </p>
-                </Accordion.Body>
-              </Accordion.Item>
-            )}
-
-            <Accordion.Item eventKey="recordPeriod">
-              <Accordion.Header>Record Period</Accordion.Header>
-              <Accordion.Body>
-                <Formik
-                  initialValues={{
-                    periodDate: '',
-                  }}
-                  onSubmit={handleSubmit}
-                  validationSchema={validationSchema}
-                >
-                  <RecordPeriodForm />
-                </Formik>
-              </Accordion.Body>
-            </Accordion.Item>
-
-            <Accordion.Item eventKey="periodHistory">
-              <Accordion.Header>Period History</Accordion.Header>
-              <Accordion.Body>
-                <ListGroup>
-                  {_(periodHistory ?? [])
-                    .reverse()
-                    .map(({ id, date }) => (
-                      <ListGroup.Item key={id}>{format(date, 'MMMM do, yyyy')}</ListGroup.Item>
-                    ))
-                    .value()}
-                </ListGroup>
-              </Accordion.Body>
-            </Accordion.Item>
-          </Accordion>
-        </Col>
-      </Row>
-      <Row className="mt-4">
-        <Col className="d-grid gap-1">
-          <Button
-            onClick={() => {
-              localStorage.clear()
-              window.location.reload()
-            }}
-          >
-            CLEAR
-          </Button>
-          <Button onClick={generatePeriodData}>GENERATE DATA</Button>
-        </Col>
-      </Row>
-    </Container>
+    <>
+      {statistics && (
+        <Row>
+          <Col>
+            <p>
+              Your average cycle length is
+              <br />
+              <span className="fw-bold">{statistics.averageCycleLength} days</span>
+            </p>
+            <p>
+              Your median cycle length is
+              <br />
+              <span className="fw-bold">{statistics.medianCycleLength} days</span>
+            </p>
+            <p>
+              Your next period may start on
+              <br />
+              <span className="fw-bold">{format(statistics.nextCycleStart, 'MMMM do, yyyy')}</span>
+            </p>
+          </Col>
+        </Row>
+      )}
+    </>
   )
 }
 
