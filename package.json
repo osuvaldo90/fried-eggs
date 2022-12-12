@@ -1,4 +1,7 @@
 {
+  "cacheDirectories": [
+    ".next/cache"
+  ],
   "name": "fried-eggs",
   "version": "0.1.0",
   "private": true,
