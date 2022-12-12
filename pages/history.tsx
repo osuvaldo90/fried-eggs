@@ -9,12 +9,9 @@ const History = ({ periodHistory }: { periodHistory: Period[] }) => {
     <Row>
       <Col>
         <ListGroup>
-          {_(periodHistory ?? [])
-            .reverse()
-            .map(({ id, date }) => (
-              <ListGroup.Item key={id}>{format(date, 'MMMM do, yyyy')}</ListGroup.Item>
-            ))
-            .value()}
+          {[...periodHistory].reverse().map(({ id, date }) => (
+            <ListGroup.Item key={id}>{format(date, 'MMMM do, yyyy')}</ListGroup.Item>
+          ))}
         </ListGroup>
       </Col>
     </Row>
