@@ -1,16 +1,38 @@
 import { format, parse } from 'date-fns'
-import { sortBy } from 'lodash'
-import { Reducer, useReducer } from 'react'
+import { sortBy, update } from 'lodash'
+import { Reducer, useEffect, useReducer } from 'react'
 import * as uuid from 'uuid'
 
 import { Period } from './types'
 
-export const usePeriodHistory = () => {
-  const [periodHistory, pushPeriod] = useReducer<Reducer<Period[], Period>, undefined>(
-    (current, newPeriod) => {
-      const newPeriodHistory = sortBy([...(current ?? []), newPeriod], (period) => period.date)
+type Action =
+  | {
+      type: 'load'
+    }
+  | {
+      type: 'add-period'
+      period: Period
+    }
 
-      if (typeof window !== 'undefined') {
+export const usePeriodHistory = () => {
+  const [periodHistory, updatePeriodHistory] = useReducer<Reducer<Period[], Action>, undefined>(
+    (current, action) => {
+      if (action.type === 'load') {
+        try {
+          const item = window.localStorage.getItem('periods')
+          return (item ? JSON.parse(item) : []).map((period: { date: string }) => ({
+            ...period,
+            date: parse(period.date, 'yyyy-MM-dd', new Date()),
+          }))
+        } catch (error) {
+          console.log(error)
+          return []
+        }
+      }
+
+      if (action.type === 'add-period') {
+        const newPeriodHistory = sortBy([...current, action.period], (period) => period.date)
+
         window.localStorage.setItem(
           'periods',
           JSON.stringify(
@@ -20,30 +42,26 @@ export const usePeriodHistory = () => {
             })),
           ),
         )
-      }
-      return newPeriodHistory
-    },
-    undefined,
-    () => {
-      if (typeof window === 'undefined') {
-        return []
+
+        return newPeriodHistory
       }
 
-      try {
-        const item = window.localStorage.getItem('periods')
-        return (item ? JSON.parse(item) : []).map((period: { date: string }) => ({
-          ...period,
-          date: parse(period.date, 'yyyy-MM-dd', new Date()),
-        }))
-      } catch (error) {
-        console.log(error)
-        return []
-      }
+      return []
     },
+    undefined,
+    () => [],
   )
+
+  useEffect(() => {
+    updatePeriodHistory({ type: 'load' })
+  }, [])
 
   return [
     periodHistory,
-    (newPeriod: Omit<Period, 'id'>) => pushPeriod({ ...newPeriod, id: uuid.v4() }),
+    (newPeriod: Omit<Period, 'id'>) =>
+      updatePeriodHistory({
+        type: 'add-period',
+        period: { ...newPeriod, id: uuid.v4() },
+      }),
   ] as const
 }

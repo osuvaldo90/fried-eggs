@@ -1,7 +1,6 @@
 import { addDays, differenceInDays, format, parse, subDays } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
 import _, { last, mean, zip } from 'lodash'
-import React from 'react'
 import { Accordion, Button, Col, Container, ListGroup, Row } from 'react-bootstrap'
 import * as yup from 'yup'
 
