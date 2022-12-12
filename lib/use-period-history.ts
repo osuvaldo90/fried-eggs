@@ -1,5 +1,5 @@
 import { format, parse } from 'date-fns'
-import { sortBy, update } from 'lodash'
+import _, { sortBy } from 'lodash'
 import { Reducer, useEffect, useReducer } from 'react'
 import * as uuid from 'uuid'
 
@@ -16,16 +16,24 @@ type Action =
 
 export type PushPeriod = (newPeriod: Omit<Period, 'id'>) => void
 
+type JsonPeriod = {
+  id: string
+  date: string
+}
+
 export const usePeriodHistory = (): readonly [Period[], PushPeriod] => {
   const [periodHistory, updatePeriodHistory] = useReducer<Reducer<Period[], Action>, undefined>(
     (current, action) => {
       if (action.type === 'load') {
         try {
           const item = window.localStorage.getItem('periods')
-          return (item ? JSON.parse(item) : []).map((period: { date: string }) => ({
-            ...period,
-            date: parse(period.date, 'yyyy-MM-dd', new Date()),
-          }))
+          return _((item ? JSON.parse(item) : []) as JsonPeriod[])
+            .map((period) => ({
+              ...period,
+              date: parse(period.date, 'yyyy-MM-dd', new Date()),
+            }))
+            .sortBy(({ date }) => date)
+            .value()
         } catch (error) {
           console.log(error)
           return []
