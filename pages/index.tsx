@@ -1,5 +1,6 @@
 import { addDays, differenceInDays, format } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
+import Link from 'next/link'
 import { Col, Row } from 'react-bootstrap'
 
 import { Period } from '../lib/types'
@@ -51,23 +52,33 @@ const App = ({ periodHistory }: { periodHistory: Period[] }) => {
 
   return (
     <>
-      {lastPeriod && dangerZone && (
-        <Row>
-          <Col>
-            <p>
-              Your last period was on <span className="fw-bold">{formatDate(lastPeriod.date)}</span>
-              .
-            </p>
-            <p className="text-danger">
-              Your danger zone is{' '}
-              <span className="fw-bold">
-                {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
-              </span>
-              .
-            </p>
-          </Col>
-        </Row>
-      )}
+      <Row>
+        <Col>
+          {lastPeriod && dangerZone ? (
+            <>
+              <p>
+                Your last period was on{' '}
+                <span className="fw-bold">{formatDate(lastPeriod.date)}</span>.
+              </p>
+              <p className="text-danger">
+                Your danger zone is{' '}
+                <span className="fw-bold">
+                  {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
+                </span>
+                .
+              </p>
+            </>
+          ) : (
+            <>
+              <p>No period data available.</p>
+              <p>
+                <Link href="/add-period">Add your last period</Link> to get started.
+              </p>
+            </>
+          )}
+        </Col>
+      </Row>
+
       {statistics && (
         <Row>
           <Col>
