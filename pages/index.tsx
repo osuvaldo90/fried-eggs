@@ -1,7 +1,6 @@
 import { addDays, differenceInDays, format } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
-import Link from 'next/link'
-import { Button, Col, Container, Row } from 'react-bootstrap'
+import { Col, Row } from 'react-bootstrap'
 
 import { Period } from '../lib/types'
 
