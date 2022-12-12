@@ -1,6 +1,7 @@
 import { parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
-import { Col, Row } from 'react-bootstrap'
+import { useState } from 'react'
+import { Col, Fade, Row, Toast } from 'react-bootstrap'
 import * as yup from 'yup'
 
 import { RecordPeriodForm, RecordPeriodFormValues } from '../lib/components/RecordPeriodForm'
@@ -19,6 +20,8 @@ const validationSchema = yup.object({
 })
 
 const AddPeriod = ({ addPeriod }: { addPeriod: AddPeriod }) => {
+  const [showSavedToast, setShowSavedToast] = useState(false)
+
   const handleSubmit = (
     { periodDate }: RecordPeriodFormValues,
     { setSubmitting, resetForm }: FormikHelpers<RecordPeriodFormValues>,
@@ -26,22 +29,29 @@ const AddPeriod = ({ addPeriod }: { addPeriod: AddPeriod }) => {
     addPeriod({ date: parse(periodDate, 'yyyy-MM-dd', new Date()) })
     resetForm()
     setSubmitting(false)
+    setShowSavedToast(true)
+    setTimeout(() => setShowSavedToast(false), 3000)
   }
 
   return (
-    <Row>
-      <Col>
-        <Formik
-          initialValues={{
-            periodDate: '',
-          }}
-          onSubmit={handleSubmit}
-          validationSchema={validationSchema}
-        >
-          <RecordPeriodForm />
-        </Formik>
-      </Col>
-    </Row>
+    <>
+      <Row>
+        <Col>
+          <Formik
+            initialValues={{
+              periodDate: '',
+            }}
+            onSubmit={handleSubmit}
+            validationSchema={validationSchema}
+          >
+            <RecordPeriodForm />
+          </Formik>
+          <Fade in={showSavedToast}>
+            <div className="pe-2 text-success text-end">Saved</div>
+          </Fade>
+        </Col>
+      </Row>
+    </>
   )
 }
 

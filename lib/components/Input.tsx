@@ -22,7 +22,7 @@ export const makeInput = <TValues extends Record<string, string>>() => {
       <Form.Group className={className}>
         <Form.Label>{label}</Form.Label>
         <Form.Control name={name} type={type} onChange={handleChange} value={values[name]} />
-        {error && <Form.Text>{error}</Form.Text>}
+        <Form.Text>{error}</Form.Text>
       </Form.Group>
     )
   }
