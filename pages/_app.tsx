@@ -13,6 +13,8 @@ const offset = () => {
   return x <= 0.33 ? 0 : x <= 0.67 ? 1 : 2
 }
 
+const isDevelopment = () => process.env.NODE_ENV === 'development'
+
 export default function App({ Component, pageProps }: AppProps) {
   const [periodHistory, addPeriod] = usePeriodHistory()
   const { pathname } = useRouter()
@@ -61,19 +63,21 @@ export default function App({ Component, pageProps }: AppProps) {
 
         <Component {...pageProps} periodHistory={periodHistory} addPeriod={addPeriod} />
 
-        <Row className="mt-4">
-          <Col className="d-grid gap-1">
-            <Button
-              onClick={() => {
-                localStorage.clear()
-                window.location.reload()
-              }}
-            >
-              CLEAR
-            </Button>
-            <Button onClick={generatePeriodData}>GENERATE DATA</Button>
-          </Col>
-        </Row>
+        {isDevelopment() && (
+          <Row className="mt-4">
+            <Col className="d-grid gap-1">
+              <Button
+                onClick={() => {
+                  localStorage.clear()
+                  window.location.reload()
+                }}
+              >
+                CLEAR
+              </Button>
+              <Button onClick={generatePeriodData}>GENERATE DATA</Button>
+            </Col>
+          </Row>
+        )}
       </Container>
     </>
   )
