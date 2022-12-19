@@ -53,13 +53,8 @@ export default function App({ Component, pageProps }: AppProps) {
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item>
-                <Nav.Link as={Link} href="/add-period">
-                  Add Period
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link as={Link} href="/history">
-                  History
+                <Nav.Link as={Link} href="/periods">
+                  Periods
                 </Nav.Link>
               </Nav.Item>
             </Nav>

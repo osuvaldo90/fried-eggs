@@ -4,17 +4,17 @@ import { Button } from 'react-bootstrap'
 
 import { makeInput } from './Input'
 
-export type RecordPeriodFormValues = {
+export type AddPeriodFormValues = {
   periodDate: string
 }
 
-const Input = makeInput<RecordPeriodFormValues>()
+const Input = makeInput<AddPeriodFormValues>()
 
-export const RecordPeriodForm = () => {
+export const AddPeriodForm = () => {
   const formik = useFormikContext()
   return (
     <Form noValidate>
-      <Input className="mb-4" name="periodDate" type="date" label="When did your period start?" />
+      <Input className="mb-1" name="periodDate" type="date" label="When did your period start?" />
       <div className="d-grid">
         <Button type="submit" disabled={formik.isSubmitting}>
           Save
