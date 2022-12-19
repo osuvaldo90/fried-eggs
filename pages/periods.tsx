@@ -1,6 +1,6 @@
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { format, parse } from 'date-fns'
+import { differenceInDays, format, parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
 import _ from 'lodash'
 import { useState } from 'react'
@@ -45,6 +45,13 @@ const History = ({
     setTimeout(() => setShowSavedToast(false), 3000)
   }
 
+  const reversedAndAugmentedHistory = [...periodHistory].reverse().map((period, index, array) => ({
+    ...period,
+    ...(index < array.length - 1
+      ? { daysSinceLastPeriod: differenceInDays(period.date, array[index + 1]!.date) }
+      : {}),
+  }))
+
   return (
     <>
       <Row>
@@ -66,16 +73,17 @@ const History = ({
       <Row className="mt-3">
         <Col>
           <ListGroup>
-            {[...periodHistory].reverse().map(({ id, date }) => (
-              <ListGroup.Item key={id}>
-                {format(date, 'MMMM do, yyyy')}
-                <Button
-                  className="float-end"
-                  variant="outline-danger"
-                  onClick={() => deletePeriod(id)}
-                >
-                  <FontAwesomeIcon icon={faTrash} />
-                </Button>
+            {reversedAndAugmentedHistory.map(({ id, date, daysSinceLastPeriod }) => (
+              <ListGroup.Item key={id} className="d-flex flex-row">
+                <div>
+                  <div className="fw-bold">{format(date, 'MMMM do, yyyy')}</div>
+                  {daysSinceLastPeriod && <div>{daysSinceLastPeriod} days since last period</div>}
+                </div>
+                <div className="ms-auto my-auto">
+                  <Button variant="outline-danger" onClick={() => deletePeriod(id)}>
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Button>
+                </div>
               </ListGroup.Item>
             ))}
           </ListGroup>
