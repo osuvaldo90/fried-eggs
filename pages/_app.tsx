@@ -1,4 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
+import '@fortawesome/fontawesome-svg-core/styles.css'
+
+import { config } from '@fortawesome/fontawesome-svg-core'
 import { addDays, subDays } from 'date-fns'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
@@ -8,6 +11,8 @@ import { Button, Col, Container, Nav, Row } from 'react-bootstrap'
 
 import { usePeriodHistory } from '../lib/use-period-history'
 
+config.autoAddCss = false
+
 const offset = () => {
   const x = Math.random()
   return x <= 0.33 ? 0 : x <= 0.67 ? 1 : 2
@@ -16,7 +21,7 @@ const offset = () => {
 const isDevelopment = () => process.env.NODE_ENV === 'development'
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [periodHistory, addPeriod] = usePeriodHistory()
+  const [periodHistory, addPeriod, deletePeriod] = usePeriodHistory()
   const { pathname } = useRouter()
 
   const generatePeriodData = () => {
@@ -61,7 +66,12 @@ export default function App({ Component, pageProps }: AppProps) {
           </Col>
         </Row>
 
-        <Component {...pageProps} periodHistory={periodHistory} addPeriod={addPeriod} />
+        <Component
+          {...pageProps}
+          periodHistory={periodHistory}
+          addPeriod={addPeriod}
+          deletePeriod={deletePeriod}
+        />
 
         {isDevelopment() && (
           <Row className="mt-4">
