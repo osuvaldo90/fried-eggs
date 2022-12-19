@@ -1,6 +1,7 @@
 {
   "cacheDirectories": [
-    ".next/cache"
+    ".next/cache",
+    "node_modules"
   ],
   "name": "fried-eggs",
   "version": "0.1.0",
