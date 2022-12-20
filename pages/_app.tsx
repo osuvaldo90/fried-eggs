@@ -8,6 +8,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Button, Col, Container, Nav, Row } from 'react-bootstrap'
+import * as uuid from 'uuid'
 
 import { usePeriodHistory } from '../lib/use-period-history'
 
@@ -21,13 +22,16 @@ const offset = () => {
 const isDevelopment = () => process.env.NODE_ENV === 'development'
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [periodHistory, addPeriod, deletePeriod] = usePeriodHistory()
+  const [periodHistory, updatePeriodHistory] = usePeriodHistory()
   const { pathname } = useRouter()
 
   const generatePeriodData = () => {
     const first = subDays(new Date(), 12 * 28)
     for (let i = 0; i < 14; i++) {
-      addPeriod({ date: addDays(first, i * (28 - offset())) })
+      updatePeriodHistory({
+        type: 'add-period',
+        period: { id: uuid.v4(), date: addDays(first, i * (28 - offset())) },
+      })
     }
   }
 
@@ -64,8 +68,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <Component
           {...pageProps}
           periodHistory={periodHistory}
-          addPeriod={addPeriod}
-          deletePeriod={deletePeriod}
+          updatePeriodHistory={updatePeriodHistory}
         />
 
         {isDevelopment() && (

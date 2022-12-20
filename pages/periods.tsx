@@ -3,13 +3,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { differenceInDays, format, parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
 import _ from 'lodash'
-import { useState } from 'react'
+import { useEffect, useRef, useState, ChangeEvent, Dispatch } from 'react'
 import { Button, Col, Fade, ListGroup, Row } from 'react-bootstrap'
+import * as uuid from 'uuid'
 import * as yup from 'yup'
 
 import { AddPeriodForm, AddPeriodFormValues } from '../lib/components/AddPeriodForm'
+import { serializeHistory } from '../lib/data'
 import { Period } from '../lib/types'
-import { AddPeriod, DeletePeriod } from '../lib/use-period-history'
+import { PeriodHistoryAction } from '../lib/use-period-history'
 
 const validationSchema = yup.object({
   periodDate: yup
@@ -25,26 +27,50 @@ const validationSchema = yup.object({
 
 const History = ({
   periodHistory,
-  addPeriod,
-  deletePeriod,
+  updatePeriodHistory,
 }: {
   periodHistory: Period[]
-  addPeriod: AddPeriod
-  deletePeriod: DeletePeriod
+  updatePeriodHistory: Dispatch<PeriodHistoryAction>
 }) => {
   const [showSavedToast, setShowSavedToast] = useState(false)
+  const [downloadUrl, setDownloadUrl] = useState<string | undefined>()
+  const importDataFileRef = useRef<HTMLInputElement | null>(null)
+  const downloadDataRef = useRef<HTMLAnchorElement>(null)
+
+  useEffect(() => {
+    const blob = new Blob([serializeHistory(periodHistory)], { type: 'application/octet-stream' })
+    setDownloadUrl(URL.createObjectURL(blob))
+  }, [periodHistory])
 
   const handleSubmit = (
     { periodDate }: AddPeriodFormValues,
     { setSubmitting, resetForm }: FormikHelpers<AddPeriodFormValues>,
   ) => {
-    addPeriod({ date: parse(periodDate, 'yyyy-MM-dd', new Date()) })
+    updatePeriodHistory({
+      type: 'add-period',
+      period: { id: uuid.v4(), date: parse(periodDate, 'yyyy-MM-dd', new Date()) },
+    })
     resetForm()
     setSubmitting(false)
     setShowSavedToast(true)
     setTimeout(() => setShowSavedToast(false), 3000)
   }
 
+  const promptImportDataFile = () => {
+    if (importDataFileRef.current) {
+      importDataFileRef.current.click()
+    }
+  }
+
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const data = await file.text()
+      console.log(data)
+      updatePeriodHistory({ type: 'import', data })
+      importDataFileRef.current!.value = ''
+    }
+  }
   const reversedAndAugmentedHistory = [...periodHistory].reverse().map((period, index, array) => ({
     ...period,
     ...(index < array.length - 1
@@ -70,23 +96,61 @@ const History = ({
           </Fade>
         </Col>
       </Row>
-      <Row className="mt-3">
-        <Col>
-          <ListGroup>
-            {reversedAndAugmentedHistory.map(({ id, date, daysSinceLastPeriod }) => (
-              <ListGroup.Item key={id} className="d-flex flex-row">
-                <div>
-                  <div className="fw-bold">{format(date, 'MMMM do, yyyy')}</div>
-                  {daysSinceLastPeriod && <div>{daysSinceLastPeriod} days since last period</div>}
-                </div>
-                <div className="ms-auto my-auto">
-                  <Button variant="outline-danger" onClick={() => deletePeriod(id)}>
-                    <FontAwesomeIcon icon={faTrash} />
-                  </Button>
-                </div>
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
+
+      {reversedAndAugmentedHistory.length > 0 && (
+        <Row className="mb-3">
+          <Col>
+            <ListGroup>
+              {reversedAndAugmentedHistory.map(({ id, date, daysSinceLastPeriod }) => (
+                <ListGroup.Item key={id} className="d-flex flex-row">
+                  <div>
+                    <div className="fw-bold">{format(date, 'MMMM do, yyyy')}</div>
+                    {daysSinceLastPeriod && <div>{daysSinceLastPeriod} days since last period</div>}
+                  </div>
+                  <div className="ms-auto my-auto">
+                    <Button
+                      variant="outline-danger"
+                      onClick={() => updatePeriodHistory({ type: 'delete-period', id })}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
+                  </div>
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          </Col>
+        </Row>
+      )}
+
+      <Row>
+        <Col className="d-grid">
+          {reversedAndAugmentedHistory.length > 0 && downloadUrl ? (
+            <>
+              <a
+                ref={downloadDataRef}
+                style={{ display: 'none' }}
+                download={`fried-eggs-${new Date().valueOf()}.json`}
+                href={downloadUrl}
+              />
+              <Button
+                onClick={() => {
+                  downloadDataRef.current?.click()
+                }}
+              >
+                Download your data
+              </Button>
+            </>
+          ) : (
+            <>
+              <input
+                ref={importDataFileRef}
+                style={{ display: 'none' }}
+                type="file"
+                onChange={handleFileUpload}
+              />
+              <Button onClick={promptImportDataFile}>Import data</Button>
+            </>
+          )}
         </Col>
       </Row>
     </>

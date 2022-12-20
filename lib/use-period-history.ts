@@ -3,9 +3,10 @@ import _, { sortBy } from 'lodash'
 import { Reducer, useEffect, useReducer } from 'react'
 import * as uuid from 'uuid'
 
+import { deserializeHistory, serializeHistory } from './data'
 import { Period } from './types'
 
-type Action =
+export type PeriodHistoryAction =
   | {
       type: 'load'
     }
@@ -17,29 +18,21 @@ type Action =
       type: 'delete-period'
       id: string
     }
+  | {
+      type: 'import'
+      data: string
+    }
 
-export type AddPeriod = (newPeriod: Omit<Period, 'id'>) => void
-
-export type DeletePeriod = (id: string) => void
-
-type JsonPeriod = {
-  id: string
-  date: string
-}
-
-export const usePeriodHistory = (): readonly [Period[], AddPeriod, DeletePeriod] => {
-  const [periodHistory, updatePeriodHistory] = useReducer<Reducer<Period[], Action>, undefined>(
+export const usePeriodHistory = () => {
+  const [periodHistory, updatePeriodHistory] = useReducer<
+    Reducer<Period[], PeriodHistoryAction>,
+    undefined
+  >(
     (current, action) => {
       if (action.type === 'load') {
         try {
           const item = window.localStorage.getItem('periods')
-          return _((item ? JSON.parse(item) : []) as JsonPeriod[])
-            .map((period) => ({
-              ...period,
-              date: parse(period.date, 'yyyy-MM-dd', new Date()),
-            }))
-            .sortBy(({ date }) => date)
-            .value()
+          return deserializeHistory(item)
         } catch (error) {
           console.log(error)
           return []
@@ -48,33 +41,20 @@ export const usePeriodHistory = (): readonly [Period[], AddPeriod, DeletePeriod]
 
       if (action.type === 'add-period') {
         const newPeriodHistory = sortBy([...current, action.period], (period) => period.date)
-
-        window.localStorage.setItem(
-          'periods',
-          JSON.stringify(
-            newPeriodHistory.map((period) => ({
-              ...period,
-              date: format(period.date, 'yyyy-MM-dd'),
-            })),
-          ),
-        )
-
+        window.localStorage.setItem('periods', serializeHistory(newPeriodHistory))
         return newPeriodHistory
       }
 
       if (action.type === 'delete-period') {
         const newPeriodHistory = current.filter((period) => period.id !== action.id)
-        window.localStorage.setItem(
-          'periods',
-          JSON.stringify(
-            newPeriodHistory.map((period) => ({
-              ...period,
-              date: format(period.date, 'yyyy-MM-dd'),
-            })),
-          ),
-        )
-
+        window.localStorage.setItem('periods', serializeHistory(newPeriodHistory))
         return newPeriodHistory
+      }
+
+      if (action.type === 'import') {
+        const deserialized = sortBy(deserializeHistory(action.data), (period) => period.date)
+        window.localStorage.setItem('periods', serializeHistory(deserialized))
+        return deserialized
       }
 
       return []
@@ -87,13 +67,7 @@ export const usePeriodHistory = (): readonly [Period[], AddPeriod, DeletePeriod]
     updatePeriodHistory({ type: 'load' })
   }, [])
 
-  return [
-    periodHistory,
-    (newPeriod: Omit<Period, 'id'>) =>
-      updatePeriodHistory({
-        type: 'add-period',
-        period: { ...newPeriod, id: uuid.v4() },
-      }),
-    (id: string) => updatePeriodHistory({ type: 'delete-period', id }),
-  ] as const
+  const getRawData = () => window.localStorage.getItem('periods')
+
+  return [periodHistory, updatePeriodHistory, getRawData] as const
 }
