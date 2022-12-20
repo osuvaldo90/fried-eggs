@@ -66,7 +66,6 @@ const History = ({
     const file = event.target.files?.[0]
     if (file) {
       const data = await file.text()
-      console.log(data)
       updatePeriodHistory({ type: 'import', data })
       importDataFileRef.current!.value = ''
     }
