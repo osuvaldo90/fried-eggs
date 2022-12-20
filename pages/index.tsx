@@ -85,12 +85,12 @@ const App = ({ periodHistory }: { periodHistory: Period[] }) => {
             <p>
               Your average cycle length is
               <br />
-              <span className="fw-bold">{statistics.averageCycleLength} days</span>
+              <span className="fw-bold">{Math.round(statistics.averageCycleLength)} days</span>
             </p>
             <p>
               Your median cycle length is
               <br />
-              <span className="fw-bold">{statistics.medianCycleLength} days</span>
+              <span className="fw-bold">{Math.round(statistics.medianCycleLength)} days</span>
             </p>
             <p>
               Your next period may start on
