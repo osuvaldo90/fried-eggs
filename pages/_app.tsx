@@ -7,7 +7,7 @@ import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Button, Nav } from 'react-bootstrap'
+import { Button, Col, Container, Nav, Row } from 'react-bootstrap'
 import * as uuid from 'uuid'
 
 import { usePeriodHistory } from '../lib/use-period-history'
@@ -36,53 +36,57 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <>
-      <Head>
-        <title>Fried Eggs</title>
-        <link rel="icon" href="/favicon.svg" />
-      </Head>
-      <div className="pt-1">
-        <Nav
-          fill
-          className="justify-content-center"
-          variant="tabs"
-          defaultActiveKey="/"
-          activeKey={pathname}
-        >
-          <Nav.Item>
-            <Nav.Link as={Link} href="/">
-              Home
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link as={Link} href="/periods">
-              Periods
-            </Nav.Link>
-          </Nav.Item>
-        </Nav>
-      </div>
-
-      <div className="p-3">
-        <Component
-          {...pageProps}
-          periodHistory={periodHistory}
-          updatePeriodHistory={updatePeriodHistory}
-        />
-
-        {isDevelopment() && (
-          <div className="mt-4 d-grid gap-1">
-            <Button
-              onClick={() => {
-                localStorage.clear()
-                window.location.reload()
-              }}
+    <Container fluid>
+      <Row>
+        <Col className="mx-auto" xs="12" sm="10" md="8" lg="6" xl="4">
+          <Head>
+            <title>Fried Eggs</title>
+            <link rel="icon" href="/favicon.svg" />
+          </Head>
+          <div className="pt-1">
+            <Nav
+              fill
+              className="justify-content-center"
+              variant="tabs"
+              defaultActiveKey="/"
+              activeKey={pathname}
             >
-              CLEAR
-            </Button>
-            <Button onClick={generatePeriodData}>GENERATE DATA</Button>
+              <Nav.Item>
+                <Nav.Link as={Link} href="/">
+                  Home
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link as={Link} href="/periods">
+                  Periods
+                </Nav.Link>
+              </Nav.Item>
+            </Nav>
           </div>
-        )}
-      </div>
-    </>
+
+          <div className="p-3">
+            <Component
+              {...pageProps}
+              periodHistory={periodHistory}
+              updatePeriodHistory={updatePeriodHistory}
+            />
+
+            {isDevelopment() && (
+              <div className="mt-4 d-grid gap-1">
+                <Button
+                  onClick={() => {
+                    localStorage.clear()
+                    window.location.reload()
+                  }}
+                >
+                  CLEAR
+                </Button>
+                <Button onClick={generatePeriodData}>GENERATE DATA</Button>
+              </div>
+            )}
+          </div>
+        </Col>
+      </Row>
+    </Container>
   )
 }
