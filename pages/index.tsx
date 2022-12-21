@@ -1,7 +1,6 @@
 import { addDays, differenceInDays, format } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
 import Link from 'next/link'
-import { Col, Row } from 'react-bootstrap'
 
 import { Period } from '../lib/types'
 
@@ -52,53 +51,46 @@ const App = ({ periodHistory }: { periodHistory: Period[] }) => {
 
   return (
     <>
-      <Row>
-        <Col>
-          {lastPeriod && dangerZone ? (
-            <>
-              <p>
-                Your last period was on{' '}
-                <span className="fw-bold">{formatDate(lastPeriod.date)}</span>.
-              </p>
-              <p className="text-danger">
-                Your danger zone is{' '}
-                <span className="fw-bold">
-                  {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
-                </span>
-                .
-              </p>
-            </>
-          ) : (
-            <>
-              <p>No period data available.</p>
-              <p>
-                <Link href="/add-period">Add your last period</Link> to get started.
-              </p>
-            </>
-          )}
-        </Col>
-      </Row>
+      {lastPeriod && dangerZone ? (
+        <>
+          <p>
+            Your last period was on <span className="fw-bold">{formatDate(lastPeriod.date)}</span>.
+          </p>
+          <p className="text-danger">
+            Your danger zone is{' '}
+            <span className="fw-bold">
+              {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
+            </span>
+            .
+          </p>
+        </>
+      ) : (
+        <div>
+          <p>No period data available.</p>
+          <p>
+            <Link href="/add-period">Add your last period</Link> to get started.
+          </p>
+        </div>
+      )}
 
       {statistics && (
-        <Row>
-          <Col>
-            <p>
-              Your average cycle length is
-              <br />
-              <span className="fw-bold">{Math.round(statistics.averageCycleLength)} days</span>
-            </p>
-            <p>
-              Your median cycle length is
-              <br />
-              <span className="fw-bold">{Math.round(statistics.medianCycleLength)} days</span>
-            </p>
-            <p>
-              Your next period may start on
-              <br />
-              <span className="fw-bold">{formatDate(statistics.nextCycleStart)}</span>
-            </p>
-          </Col>
-        </Row>
+        <>
+          <p>
+            Your average cycle length is
+            <br />
+            <span className="fw-bold">{Math.round(statistics.averageCycleLength)} days</span>
+          </p>
+          <p>
+            Your median cycle length is
+            <br />
+            <span className="fw-bold">{Math.round(statistics.medianCycleLength)} days</span>
+          </p>
+          <p>
+            Your next period may start on
+            <br />
+            <span className="fw-bold">{formatDate(statistics.nextCycleStart)}</span>
+          </p>
+        </>
       )}
     </>
   )
