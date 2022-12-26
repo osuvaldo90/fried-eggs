@@ -10,30 +10,16 @@ import { useRouter } from 'next/router'
 import { Button, Col, Container, Nav, Row } from 'react-bootstrap'
 import * as uuid from 'uuid'
 
+import { DevTools } from '../lib/components/DevTools'
 import { usePeriodHistory } from '../lib/use-period-history'
 
 config.autoAddCss = false
-
-const offset = () => {
-  const x = Math.random()
-  return x <= 0.33 ? 0 : x <= 0.67 ? 1 : 2
-}
 
 const isDevelopment = () => process.env.NODE_ENV === 'development'
 
 export default function App({ Component, pageProps }: AppProps) {
   const [periodHistory, updatePeriodHistory] = usePeriodHistory()
   const { pathname } = useRouter()
-
-  const generatePeriodData = () => {
-    const first = subDays(new Date(), 12 * 28)
-    for (let i = 0; i < 14; i++) {
-      updatePeriodHistory({
-        type: 'add-period',
-        period: { id: uuid.v4(), date: addDays(first, i * (28 - offset())) },
-      })
-    }
-  }
 
   return (
     <Container fluid>
@@ -72,17 +58,7 @@ export default function App({ Component, pageProps }: AppProps) {
             />
 
             {isDevelopment() && (
-              <div className="mt-4 d-grid gap-1">
-                <Button
-                  onClick={() => {
-                    localStorage.clear()
-                    window.location.reload()
-                  }}
-                >
-                  CLEAR
-                </Button>
-                <Button onClick={generatePeriodData}>GENERATE DATA</Button>
-              </div>
+              <DevTools className="mt-4 d-grid gap-1" updatePeriodHistory={updatePeriodHistory} />
             )}
           </div>
         </Col>
