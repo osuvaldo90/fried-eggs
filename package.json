@@ -33,6 +33,7 @@
     "yup": "^0.32.11"
   },
   "devDependencies": {
+    "@types/gapi": "^0.0.43",
     "@types/uuid": "^9.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-react-hooks": "^4.6.0",

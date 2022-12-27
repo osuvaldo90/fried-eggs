@@ -11,7 +11,7 @@ import { Button, Col, Container, Nav, Row } from 'react-bootstrap'
 import * as uuid from 'uuid'
 
 import { DevTools } from '../lib/components/DevTools'
-import { usePeriodHistory } from '../lib/use-period-history'
+import { usePeriodHistory } from '../lib/periods/use-period-history'
 
 config.autoAddCss = false
 

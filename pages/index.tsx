@@ -2,7 +2,7 @@ import { addDays, differenceInDays, format } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
 import Link from 'next/link'
 
-import { Period } from '../lib/types'
+import { Period } from '../lib/periods/types'
 
 const median = (nums: number[]) => {
   if (nums.length === 0) return 0

@@ -8,9 +8,9 @@ import * as uuid from 'uuid'
 import * as yup from 'yup'
 
 import { AddPeriodForm, AddPeriodFormValues } from '../lib/components/AddPeriodForm'
-import { serializeHistory } from '../lib/data'
-import { Period } from '../lib/types'
-import { PeriodHistoryAction } from '../lib/use-period-history'
+import { serializeHistory } from '../lib/periods/data'
+import { Period } from '../lib/periods/types'
+import { PeriodHistoryAction } from '../lib/periods/use-period-history'
 
 const validationSchema = yup.object({
   periodDate: yup

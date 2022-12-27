@@ -24,7 +24,7 @@ const isJsonPeriod = (x: unknown): x is JsonPeriod =>
   'date' in x &&
   typeof x.date === 'string'
 
-export const deserializeHistory = (data: string | null) => {
+export const deserializeHistory = (data: string) => {
   if (!data) return []
   const parsed = JSON.parse(data)
   if (!Array.isArray(parsed)) {

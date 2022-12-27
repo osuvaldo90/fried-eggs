@@ -32,6 +32,7 @@ export const usePeriodHistory = () => {
       if (action.type === 'load') {
         try {
           const item = window.localStorage.getItem('periods')
+          if (item === null) return []
           return deserializeHistory(item)
         } catch (error) {
           console.log(error)
