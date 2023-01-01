@@ -2,15 +2,14 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { differenceInDays, format, parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
-import { ChangeEvent, Dispatch, useEffect, useRef, useState } from 'react'
+import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Button, Fade, ListGroup } from 'react-bootstrap'
 import * as uuid from 'uuid'
 import * as yup from 'yup'
 
 import { AddPeriodForm, AddPeriodFormValues } from '../lib/components/AddPeriodForm'
+import { useDataContext } from '../lib/data-context'
 import { serializeHistory } from '../lib/periods/data'
-import { Period } from '../lib/periods/types'
-import { PeriodHistoryAction } from '../lib/periods/use-period-history'
 
 const validationSchema = yup.object({
   periodDate: yup
@@ -24,13 +23,8 @@ const validationSchema = yup.object({
     }),
 })
 
-const History = ({
-  periodHistory,
-  updatePeriodHistory,
-}: {
-  periodHistory: Period[]
-  updatePeriodHistory: Dispatch<PeriodHistoryAction>
-}) => {
+const History = () => {
+  const { periodHistory, updatePeriodHistory } = useDataContext()
   const [showSavedToast, setShowSavedToast] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState<string | undefined>()
   const importDataFileRef = useRef<HTMLInputElement | null>(null)

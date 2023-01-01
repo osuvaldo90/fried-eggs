@@ -9,14 +9,13 @@ import { useRouter } from 'next/router'
 import { Col, Container, Nav, Row } from 'react-bootstrap'
 
 import { DevTools } from '../lib/components/DevTools'
-import { usePeriodHistory } from '../lib/periods/use-period-history'
+import { DataProvider } from '../lib/data-context'
 
 config.autoAddCss = false
 
 const isDevelopment = () => process.env.NODE_ENV === 'development'
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [periodHistory, updatePeriodHistory] = usePeriodHistory()
   const { pathname } = useRouter()
 
   return (
@@ -48,15 +47,11 @@ export default function App({ Component, pageProps }: AppProps) {
             </Nav>
           </div>
 
-          <Component
-            {...pageProps}
-            periodHistory={periodHistory}
-            updatePeriodHistory={updatePeriodHistory}
-          />
+          <DataProvider>
+            <Component {...pageProps} />
 
-          {isDevelopment() && (
-            <DevTools className="mt-4 d-grid gap-1" updatePeriodHistory={updatePeriodHistory} />
-          )}
+            {isDevelopment() && <DevTools className="mt-4 d-grid gap-1" />}
+          </DataProvider>
         </Col>
       </Row>
     </Container>

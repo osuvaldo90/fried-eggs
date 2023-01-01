@@ -2,6 +2,7 @@ import { addDays, differenceInDays, format } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
 import Link from 'next/link'
 
+import { useDataContext } from '../lib/data-context'
 import { Period } from '../lib/periods/types'
 
 const median = (nums: number[]) => {
@@ -44,7 +45,8 @@ const calculateDangerZone = (periodHistory: Period[]) => {
 
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
-const App = ({ periodHistory }: { periodHistory: Period[] }) => {
+const App = () => {
+  const { periodHistory } = useDataContext()
   const statistics = crunchPeriods(periodHistory)
   const dangerZone = calculateDangerZone(periodHistory)
   const lastPeriod = last(periodHistory)
