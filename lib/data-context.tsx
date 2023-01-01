@@ -1,4 +1,4 @@
-import { createContext, Children, ReactNode, useContext, Dispatch } from 'react'
+import { createContext, ReactNode, useContext, Dispatch } from 'react'
 
 import { Period } from './periods/types'
 import { PeriodHistoryAction, usePeriodHistory } from './periods/use-period-history'

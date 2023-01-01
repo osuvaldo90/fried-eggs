@@ -1,4 +1,5 @@
 {
+  "plugins": ["unused-imports"],
   "extends": [
     "next/core-web-vitals",
     "plugin:react-hooks/recommended",
@@ -10,6 +11,7 @@
     "react/self-closing-comp": "error",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error",
+    "unused-imports/no-unused-imports": "error",
     "import/order": [
       "error",
       {
