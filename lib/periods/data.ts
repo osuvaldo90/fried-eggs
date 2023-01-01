@@ -1,5 +1,5 @@
 import { format, parse } from 'date-fns'
-import _, { isNil } from 'lodash'
+import { isNil } from 'lodash'
 
 import { Period } from './types'
 
