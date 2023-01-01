@@ -50,17 +50,15 @@ export default function App({ Component, pageProps }: AppProps) {
             </Nav>
           </div>
 
-          <div className="p-3">
-            <Component
-              {...pageProps}
-              periodHistory={periodHistory}
-              updatePeriodHistory={updatePeriodHistory}
-            />
+          <Component
+            {...pageProps}
+            periodHistory={periodHistory}
+            updatePeriodHistory={updatePeriodHistory}
+          />
 
-            {isDevelopment() && (
-              <DevTools className="mt-4 d-grid gap-1" updatePeriodHistory={updatePeriodHistory} />
-            )}
-          </div>
+          {isDevelopment() && (
+            <DevTools className="mt-4 d-grid gap-1" updatePeriodHistory={updatePeriodHistory} />
+          )}
         </Col>
       </Row>
     </Container>

@@ -57,7 +57,8 @@ const App = ({ periodHistory }: { periodHistory: Period[] }) => {
             Your last period was on <span className="fw-bold">{formatDate(lastPeriod.date)}</span>.
           </p>
           <p className="text-danger">
-            Your danger zone is{' '}
+            Your danger zone is
+            <br />
             <span className="fw-bold">
               {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
             </span>
