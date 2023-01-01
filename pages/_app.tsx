@@ -8,8 +8,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Col, Container, Nav, Row } from 'react-bootstrap'
 
+import { AppProvider } from '../lib/app-context'
 import { DevTools } from '../lib/components/DevTools'
-import { DataProvider } from '../lib/data-context'
 
 config.autoAddCss = false
 
@@ -47,11 +47,11 @@ export default function App({ Component, pageProps }: AppProps) {
             </Nav>
           </div>
 
-          <DataProvider>
+          <AppProvider>
             <Component {...pageProps} />
 
             {isDevelopment() && <DevTools className="mt-4 d-grid gap-1" />}
-          </DataProvider>
+          </AppProvider>
         </Col>
       </Row>
     </Container>

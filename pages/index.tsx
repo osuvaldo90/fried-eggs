@@ -1,8 +1,9 @@
 import { addDays, differenceInDays, format } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
 import Link from 'next/link'
+import { Button } from 'react-bootstrap'
 
-import { useDataContext } from '../lib/data-context'
+import { useAppContext } from '../lib/app-context'
 import { Period } from '../lib/periods/types'
 
 const median = (nums: number[]) => {
@@ -46,7 +47,8 @@ const calculateDangerZone = (periodHistory: Period[]) => {
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
 const App = () => {
-  const { periodHistory } = useDataContext()
+  const { periodHistory, calendarData, createFriedEggsCalendar } = useAppContext()
+
   const statistics = crunchPeriods(periodHistory)
   const dangerZone = calculateDangerZone(periodHistory)
   const lastPeriod = last(periodHistory)
@@ -65,6 +67,17 @@ const App = () => {
               {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
             </span>
             .
+            <div>
+              {calendarData === 'uninitialized' && (
+                <Button
+                  className="p-0"
+                  variant="link"
+                  onClick={() => createFriedEggsCalendar(last(periodHistory))}
+                >
+                  Setup Google Calendar
+                </Button>
+              )}
+            </div>
           </p>
         </>
       ) : (

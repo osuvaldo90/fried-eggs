@@ -1,7 +1,5 @@
-import { format, parse } from 'date-fns'
-import _, { sortBy } from 'lodash'
+import { sortBy } from 'lodash'
 import { Reducer, useEffect, useReducer } from 'react'
-import * as uuid from 'uuid'
 
 import { deserializeHistory, serializeHistory } from './data'
 import { Period } from './types'
@@ -35,7 +33,7 @@ export const usePeriodHistory = () => {
           if (item === null) return []
           return deserializeHistory(item)
         } catch (error) {
-          console.log(error)
+          console.error(error)
           return []
         }
       }

@@ -2,7 +2,7 @@ import { addDays, subDays } from 'date-fns'
 import { Button } from 'react-bootstrap'
 import * as uuid from 'uuid'
 
-import { useDataContext } from '../data-context'
+import { useAppContext } from '../app-context'
 
 const offset = () => {
   const x = Math.random()
@@ -10,7 +10,7 @@ const offset = () => {
 }
 
 export const DevTools = ({ className }: { className: string }) => {
-  const { updatePeriodHistory } = useDataContext()
+  const { updatePeriodHistory } = useAppContext()
 
   const generatePeriodData = () => {
     const first = subDays(new Date(), 12 * 28)
