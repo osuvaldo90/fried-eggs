@@ -10,6 +10,7 @@ import * as yup from 'yup'
 import { useAppContext } from '../lib/app-context'
 import { AddPeriodForm, AddPeriodFormValues } from '../lib/components/AddPeriodForm'
 import { serializeHistory } from '../lib/periods/data'
+import { makePeriodEventsParams } from '../lib/periods/lib'
 import { Period } from '../lib/periods/types'
 
 const validationSchema = yup.object({
@@ -30,8 +31,8 @@ const History = () => {
     updatePeriodHistory,
     calendarData,
     createFriedEggsCalendar,
-    createDangerZoneEvent,
-    deleteDangerZoneEvent,
+    createPeriodEvents,
+    deletePeriodEvents,
   } = useAppContext()
   const [showSavedToast, setShowSavedToast] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState<string | undefined>()
@@ -40,6 +41,7 @@ const History = () => {
   const [lastPeriod, setLastPeriod] = useState<Period>()
   const [showConnectGoogleModal, setShowConnectGoogleModal] = useState(false)
   const [creatingCalendar, setCreatingCalendar] = useState(false)
+  const [nextAction, setNextAction] = useState<'create-calendar' | 'create-events'>()
 
   useEffect(() => {
     const blob = new Blob([serializeHistory(periodHistory)], { type: 'application/octet-stream' })
@@ -62,11 +64,36 @@ const History = () => {
       if (calendarData === 'uninitialized') {
         setShowConnectGoogleModal(true)
       } else if (typeof calendarData === 'object') {
-        await createDangerZoneEvent(period)
+        setNextAction('create-events')
       }
     },
-    [calendarData, createDangerZoneEvent, updatePeriodHistory],
+    [calendarData, updatePeriodHistory, setNextAction],
   )
+
+  // wait until period history contains lastPeriod so we get accurate next period start date
+  useEffect(() => {
+    const createCalendarEvents = async () => {
+      if (!lastPeriod) return
+      if (!periodHistory.find((period) => period.id === lastPeriod.id)) return
+
+      const params = makePeriodEventsParams(periodHistory)
+
+      if (nextAction === 'create-calendar') {
+        setNextAction(undefined)
+        setLastPeriod(undefined)
+        await createFriedEggsCalendar(params)
+        setCreatingCalendar(false)
+        setShowConnectGoogleModal(false)
+      }
+
+      if (params && nextAction === 'create-events') {
+        setNextAction(undefined)
+        setLastPeriod(undefined)
+        await createPeriodEvents(params)
+      }
+    }
+    createCalendarEvents()
+  }, [periodHistory, lastPeriod, nextAction, createFriedEggsCalendar, createPeriodEvents])
 
   const promptImportDataFile = () => {
     if (importDataFileRef.current) {
@@ -90,11 +117,11 @@ const History = () => {
     async (periodId: string) => {
       const period = periodHistory.find(({ id }) => id === periodId)
       if (period) {
-        await deleteDangerZoneEvent(period)
+        await deletePeriodEvents(period.id)
       }
       updatePeriodHistory({ type: 'delete-period', id: periodId })
     },
-    [periodHistory, updatePeriodHistory, deleteDangerZoneEvent],
+    [periodHistory, updatePeriodHistory, deletePeriodEvents],
   )
 
   const reversedAndAugmentedHistory = [...periodHistory].reverse().map((period, index, array) => ({
@@ -183,9 +210,7 @@ const History = () => {
             disabled={creatingCalendar}
             onClick={async () => {
               setCreatingCalendar(true)
-              await createFriedEggsCalendar(lastPeriod)
-              setCreatingCalendar(false)
-              setShowConnectGoogleModal(false)
+              setNextAction('create-calendar')
             }}
           >
             Yes

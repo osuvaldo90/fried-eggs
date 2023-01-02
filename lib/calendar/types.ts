@@ -4,4 +4,8 @@ export type CalendarData = {
     periodId: string
     eventId: string
   }>
+  nextPeriodEvents?: Array<{
+    periodId: string
+    eventId: string
+  }>
 }

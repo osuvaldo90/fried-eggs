@@ -1,57 +1,45 @@
-import { addDays, differenceInDays, format } from 'date-fns'
-import _, { last, mean, zip } from 'lodash'
+import { format } from 'date-fns'
+import { last } from 'lodash'
 import Link from 'next/link'
 import { Button } from 'react-bootstrap'
 
 import { useAppContext } from '../lib/app-context'
-import { Period } from '../lib/periods/types'
-
-const median = (nums: number[]) => {
-  if (nums.length === 0) return 0
-  if (nums.length === 1) return nums[0] as number
-
-  const midpoint = Math.floor(nums.length / 2)
-  const median =
-    nums.length % 2 === 1
-      ? (nums[midpoint] as number)
-      : ((nums[midpoint - 1] as number) + (nums[midpoint] as number)) / 2
-  return median
-}
-
-const crunchPeriods = (periodHistory: Period[]) => {
-  if (periodHistory.length <= 1) return undefined
-
-  const cycleLengths = _(zip(periodHistory.slice(0, -1), periodHistory.slice(1)))
-    .map(([a, b]) => differenceInDays(b!.date, a!.date))
-    .sort()
-    .value()
-
-  const medianCycleLength = median(cycleLengths)
-
-  return {
-    averageCycleLength: mean(cycleLengths),
-    medianCycleLength,
-    nextCycleStart: addDays(last(periodHistory)!.date, medianCycleLength),
-  }
-}
-
-const calculateDangerZone = (periodHistory: Period[]) => {
-  const lastPeriod = last(periodHistory)
-  if (!lastPeriod) return undefined
-
-  const start = addDays(lastPeriod.date, 7)
-  const end = addDays(start, 7)
-  return { start, end }
-}
+import { calculateDangerZone, crunchPeriods, makePeriodEventsParams } from '../lib/periods/lib'
 
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
 const App = () => {
-  const { periodHistory, calendarData, createFriedEggsCalendar } = useAppContext()
+  const { periodHistory, calendarData, createFriedEggsCalendar, createPeriodEvents } =
+    useAppContext()
 
   const statistics = crunchPeriods(periodHistory)
-  const dangerZone = calculateDangerZone(periodHistory)
   const lastPeriod = last(periodHistory)
+  const dangerZone = lastPeriod ? calculateDangerZone(lastPeriod) : undefined
+
+  const hasNextPeriodEvent =
+    typeof calendarData === 'object' &&
+    lastPeriod &&
+    !!calendarData.nextPeriodEvents?.find((e) => e.periodId === lastPeriod.id)
+
+  const hasDangerZoneEvent =
+    typeof calendarData === 'object' &&
+    lastPeriod &&
+    !!calendarData.dangerZoneEvents?.find((e) => e.periodId === lastPeriod.id)
+
+  const showAddNextPeriodEvent =
+    lastPeriod && typeof calendarData === 'object' && (!hasNextPeriodEvent || !hasDangerZoneEvent)
+
+  const addEvents = async () => {
+    if (!lastPeriod) return
+    const params = {
+      periodId: lastPeriod?.id,
+      ...(hasNextPeriodEvent || !statistics ? {} : { nextPeriodStart: statistics.nextPeriodStart }),
+      ...(hasDangerZoneEvent || !dangerZone
+        ? {}
+        : { dangerZone: { start: dangerZone.start, end: dangerZone.end } }),
+    }
+    await createPeriodEvents(params)
+  }
 
   return (
     <>
@@ -67,17 +55,6 @@ const App = () => {
               {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
             </span>
             .
-            <div>
-              {calendarData === 'uninitialized' && (
-                <Button
-                  className="p-0"
-                  variant="link"
-                  onClick={() => createFriedEggsCalendar(last(periodHistory))}
-                >
-                  Setup Google Calendar
-                </Button>
-              )}
-            </div>
           </p>
         </>
       ) : (
@@ -89,24 +66,44 @@ const App = () => {
         </div>
       )}
 
-      {statistics && (
-        <>
-          <p>
-            Your average cycle length is
-            <br />
-            <span className="fw-bold">{Math.round(statistics.averageCycleLength)} days</span>
-          </p>
-          <p>
-            Your median cycle length is
-            <br />
-            <span className="fw-bold">{Math.round(statistics.medianCycleLength)} days</span>
-          </p>
-          <p>
-            Your next period may start on
-            <br />
-            <span className="fw-bold">{formatDate(statistics.nextCycleStart)}</span>
-          </p>
-        </>
+      {statistics?.nextPeriodStart && (
+        <p>
+          Your next period may start on
+          <br />
+          <span className="fw-bold">{formatDate(statistics.nextPeriodStart)}</span>
+        </p>
+      )}
+
+      {calendarData === 'uninitialized' && (
+        <Button
+          className="p-0 mb-3"
+          variant="link"
+          onClick={() => createFriedEggsCalendar(makePeriodEventsParams(periodHistory))}
+        >
+          Add to Google calendar
+        </Button>
+      )}
+
+      {showAddNextPeriodEvent && (
+        <Button className="p-0 mb-3" variant="link" onClick={addEvents}>
+          Add to Google calendar
+        </Button>
+      )}
+
+      {statistics?.averageCycleLength && (
+        <p>
+          Your average cycle length is
+          <br />
+          <span className="fw-bold">{Math.round(statistics.averageCycleLength)} days</span>
+        </p>
+      )}
+
+      {statistics?.medianCycleLength && (
+        <p>
+          Your median cycle length is
+          <br />
+          <span className="fw-bold">{Math.round(statistics.medianCycleLength)} days</span>
+        </p>
       )}
     </>
   )

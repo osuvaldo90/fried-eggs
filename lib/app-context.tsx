@@ -2,7 +2,11 @@ import { createContext, ReactNode, useContext, Dispatch, useCallback } from 'rea
 
 import { useGoogleAccessToken } from './calendar/use-google-access-token'
 import { useGapiClient } from './calendar/use-google-api'
-import { CalendarDataReducerState, useGoogleCalendar } from './calendar/use-google-calendar'
+import {
+  CalendarDataReducerState,
+  PeriodEventsParams,
+  useGoogleCalendar,
+} from './calendar/use-google-calendar'
 import { Period } from './periods/types'
 import { PeriodHistoryAction, usePeriodHistory } from './periods/use-period-history'
 
@@ -11,9 +15,9 @@ type AppContext = {
   updatePeriodHistory: Dispatch<PeriodHistoryAction>
   getAccessToken: () => Promise<string>
   calendarData: CalendarDataReducerState
-  createFriedEggsCalendar: (lastPeriod?: Period) => Promise<void>
-  createDangerZoneEvent: (period: Period) => Promise<void>
-  deleteDangerZoneEvent: (period: Period) => Promise<void>
+  createFriedEggsCalendar: (periodEventsParams?: PeriodEventsParams) => Promise<void>
+  createPeriodEvents: (periodEventsParams: PeriodEventsParams) => Promise<void>
+  deletePeriodEvents: (periodId: string) => Promise<void>
 }
 
 const AppContext = createContext<AppContext>({
@@ -22,8 +26,8 @@ const AppContext = createContext<AppContext>({
   getAccessToken: async () => '',
   calendarData: 'loading',
   createFriedEggsCalendar: async () => {},
-  createDangerZoneEvent: async () => {},
-  deleteDangerZoneEvent: async () => {},
+  createPeriodEvents: async () => {},
+  deletePeriodEvents: async () => {},
 })
 
 export const useAppContext = () => useContext(AppContext)
@@ -32,40 +36,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [periodHistory, updatePeriodHistory] = usePeriodHistory()
   const { getAccessToken } = useGoogleAccessToken()
   const gapiClient = useGapiClient()
-  const { calendarData, createFriedEggsCalendar, createDangerZoneEvent, deleteDangerZoneEvent } =
+  const { calendarData, createFriedEggsCalendar, createPeriodEvents, deletePeriodEvents } =
     useGoogleCalendar()
 
   const createFriedEggsCalendarWrapper = useCallback(
-    async (lastPeriod?: Period) => {
+    async (periodEventsParams?: PeriodEventsParams) => {
       if (!gapiClient) return
       await getAccessToken()
-      await createFriedEggsCalendar(gapiClient, lastPeriod)
+      await createFriedEggsCalendar(gapiClient, periodEventsParams)
     },
     [gapiClient, getAccessToken, createFriedEggsCalendar],
   )
 
-  const createDangerZoneEventWrapper = useCallback(
-    async (period: Period) => {
+  const createPeriodEventsWrapper = useCallback(
+    async (periodEventsParams: PeriodEventsParams) => {
       if (!gapiClient) return
       if (typeof calendarData !== 'object') return
       await getAccessToken()
-      await createDangerZoneEvent(gapiClient, calendarData.calendarId, period)
+      await createPeriodEvents(gapiClient, calendarData.calendarId, periodEventsParams)
     },
-    [gapiClient, calendarData, getAccessToken, createDangerZoneEvent],
+    [gapiClient, calendarData, getAccessToken, createPeriodEvents],
   )
 
-  const deleteDangerZoneEventWrapper = useCallback(
-    async (period: Period) => {
+  const deletePeriodEventsWrapper = useCallback(
+    async (periodId: string) => {
       if (!gapiClient) return
       if (typeof calendarData !== 'object') return
       await getAccessToken()
-      const eventId = calendarData.dangerZoneEvents.find(
-        ({ periodId }) => periodId === period.id,
-      )?.eventId
-      if (!eventId) return
-      await deleteDangerZoneEvent(gapiClient, eventId)
+      await deletePeriodEvents(gapiClient, { periodId })
     },
-    [gapiClient, calendarData, getAccessToken, deleteDangerZoneEvent],
+    [gapiClient, calendarData, getAccessToken, deletePeriodEvents],
   )
 
   return (
@@ -76,8 +76,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         getAccessToken,
         calendarData,
         createFriedEggsCalendar: createFriedEggsCalendarWrapper,
-        createDangerZoneEvent: createDangerZoneEventWrapper,
-        deleteDangerZoneEvent: deleteDangerZoneEventWrapper,
+        createPeriodEvents: createPeriodEventsWrapper,
+        deletePeriodEvents: deletePeriodEventsWrapper,
       }}
     >
       {children}
