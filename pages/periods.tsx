@@ -50,10 +50,14 @@ const History = () => {
 
   const handleSubmit = useCallback(
     async (
-      { periodDate }: AddPeriodFormValues,
+      { periodDate, periodNotes }: AddPeriodFormValues,
       { setSubmitting, resetForm }: FormikHelpers<AddPeriodFormValues>,
     ) => {
-      const period = { id: uuid.v4(), date: parse(periodDate, 'yyyy-MM-dd', new Date()) }
+      const period = {
+        id: uuid.v4(),
+        date: parse(periodDate, 'yyyy-MM-dd', new Date()),
+        notes: periodNotes,
+      }
       updatePeriodHistory({ type: 'add-period', period })
       setLastPeriod(period)
       resetForm()
@@ -136,6 +140,7 @@ const History = () => {
       <Formik
         initialValues={{
           periodDate: '',
+          periodNotes: '',
         }}
         onSubmit={handleSubmit}
         validationSchema={validationSchema}
@@ -148,11 +153,16 @@ const History = () => {
 
       {reversedAndAugmentedHistory.length > 0 && (
         <ListGroup className="mb-3">
-          {reversedAndAugmentedHistory.map(({ id, date, daysSinceLastPeriod }) => (
+          {reversedAndAugmentedHistory.map(({ id, date, daysSinceLastPeriod, notes }) => (
             <ListGroup.Item key={id} className="d-flex flex-row">
               <div>
-                <div className="fw-bold">{format(date, 'MMMM do, yyyy')}</div>
-                {daysSinceLastPeriod && <div>{daysSinceLastPeriod} days since last period</div>}
+                <div className="h6">{format(date, 'MMMM do, yyyy')}</div>
+                <div style={{ whiteSpace: 'pre-wrap' }}>{notes}</div>
+                {daysSinceLastPeriod && (
+                  <div className="text-secondary fs-6">
+                    {daysSinceLastPeriod} days since last period
+                  </div>
+                )}
               </div>
               <div className="ms-auto my-auto">
                 <Button variant="outline-danger" onClick={() => handleDeletePeriod(id)}>

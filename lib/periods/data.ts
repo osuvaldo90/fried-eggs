@@ -14,6 +14,7 @@ export const serializeHistory = (history: Period[]) =>
 type JsonPeriod = {
   id: string
   date: string
+  notes?: string
 }
 
 const isJsonPeriod = (x: unknown): x is JsonPeriod =>

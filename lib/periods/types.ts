@@ -5,4 +5,5 @@ export type Config = {
 export type Period = {
   id: string
   date: Date
+  notes?: string
 }

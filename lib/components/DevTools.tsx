@@ -17,7 +17,11 @@ export const DevTools = ({ className }: { className: string }) => {
     for (let i = 0; i < 14; i++) {
       updatePeriodHistory({
         type: 'add-period',
-        period: { id: uuid.v4(), date: addDays(first, i * (28 - offset())) },
+        period: {
+          id: uuid.v4(),
+          date: addDays(first, i * (28 - offset())),
+          notes: `notes for period ${i}`,
+        },
       })
     }
   }

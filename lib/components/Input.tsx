@@ -21,7 +21,13 @@ export const makeInput = <TValues extends Record<string, string>>() => {
     return (
       <Form.Group className={className}>
         <Form.Label>{label}</Form.Label>
-        <Form.Control name={name} type={type} onChange={handleChange} value={values[name]} />
+        <Form.Control
+          as={type === 'textarea' ? 'textarea' : undefined}
+          name={name}
+          type={type}
+          onChange={handleChange}
+          value={values[name]}
+        />
         <Form.Text>{error ?? <>&nbsp;</>}</Form.Text>
       </Form.Group>
     )
