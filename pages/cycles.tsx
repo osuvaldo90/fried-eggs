@@ -9,9 +9,9 @@ import * as yup from 'yup'
 
 import { useAppContext } from '../lib/app-context'
 import { AddPeriodForm, AddPeriodFormValues } from '../lib/components/AddPeriodForm'
-import { serializeHistory } from '../lib/periods/data'
-import { makePeriodEventsParams } from '../lib/periods/lib'
-import { Period } from '../lib/periods/types'
+import { serializeCycleLog } from '../lib/cycles/data'
+import { makePeriodEventsParams } from '../lib/cycles/lib'
+import { CycleLogEntry } from '../lib/cycles/types'
 
 const validationSchema = yup.object({
   periodDate: yup
@@ -27,8 +27,8 @@ const validationSchema = yup.object({
 
 const History = () => {
   const {
-    periodHistory,
-    updatePeriodHistory,
+    cycleLog,
+    updateCycleLog,
     calendarData,
     createFriedEggsCalendar,
     createPeriodEvents,
@@ -38,15 +38,15 @@ const History = () => {
   const [downloadUrl, setDownloadUrl] = useState<string | undefined>()
   const importDataFileRef = useRef<HTMLInputElement | null>(null)
   const downloadDataRef = useRef<HTMLAnchorElement>(null)
-  const [lastPeriod, setLastPeriod] = useState<Period>()
+  const [lastEntry, setLastEntry] = useState<CycleLogEntry>()
   const [showConnectGoogleModal, setShowConnectGoogleModal] = useState(false)
   const [creatingCalendar, setCreatingCalendar] = useState(false)
   const [nextAction, setNextAction] = useState<'create-calendar' | 'create-events'>()
 
   useEffect(() => {
-    const blob = new Blob([serializeHistory(periodHistory)], { type: 'application/octet-stream' })
+    const blob = new Blob([serializeCycleLog(cycleLog)], { type: 'application/octet-stream' })
     setDownloadUrl(URL.createObjectURL(blob))
-  }, [periodHistory])
+  }, [cycleLog])
 
   const handleSubmit = useCallback(
     async (
@@ -58,8 +58,8 @@ const History = () => {
         date: parse(periodDate, 'yyyy-MM-dd', new Date()),
         notes: periodNotes,
       }
-      updatePeriodHistory({ type: 'add-period', period })
-      setLastPeriod(period)
+      updateCycleLog({ type: 'add-period', period })
+      setLastEntry(period)
       resetForm()
       setSubmitting(false)
       setShowSavedToast(true)
@@ -71,20 +71,20 @@ const History = () => {
         setNextAction('create-events')
       }
     },
-    [calendarData, updatePeriodHistory, setNextAction],
+    [calendarData, updateCycleLog, setNextAction],
   )
 
   // wait until period history contains lastPeriod so we get accurate next period start date
   useEffect(() => {
     const createCalendarEvents = async () => {
-      if (!lastPeriod) return
-      if (!periodHistory.find((period) => period.id === lastPeriod.id)) return
+      if (!lastEntry) return
+      if (!cycleLog.find((period) => period.id === lastEntry.id)) return
 
-      const params = makePeriodEventsParams(periodHistory)
+      const params = makePeriodEventsParams(cycleLog)
 
       if (nextAction === 'create-calendar') {
         setNextAction(undefined)
-        setLastPeriod(undefined)
+        setLastEntry(undefined)
         await createFriedEggsCalendar(params)
         setCreatingCalendar(false)
         setShowConnectGoogleModal(false)
@@ -92,12 +92,12 @@ const History = () => {
 
       if (params && nextAction === 'create-events') {
         setNextAction(undefined)
-        setLastPeriod(undefined)
+        setLastEntry(undefined)
         await createPeriodEvents(params)
       }
     }
     createCalendarEvents()
-  }, [periodHistory, lastPeriod, nextAction, createFriedEggsCalendar, createPeriodEvents])
+  }, [cycleLog, lastEntry, nextAction, createFriedEggsCalendar, createPeriodEvents])
 
   const promptImportDataFile = () => {
     if (importDataFileRef.current) {
@@ -110,28 +110,28 @@ const History = () => {
       const file = event.target.files?.[0]
       if (file) {
         const data = await file.text()
-        updatePeriodHistory({ type: 'import', data })
+        updateCycleLog({ type: 'import', data })
         importDataFileRef.current!.value = ''
       }
     },
-    [updatePeriodHistory],
+    [updateCycleLog],
   )
 
   const handleDeletePeriod = useCallback(
     async (periodId: string) => {
-      const period = periodHistory.find(({ id }) => id === periodId)
+      const period = cycleLog.find(({ id }) => id === periodId)
       if (period) {
         await deletePeriodEvents(period.id)
       }
-      updatePeriodHistory({ type: 'delete-period', id: periodId })
+      updateCycleLog({ type: 'delete-event', id: periodId })
     },
-    [periodHistory, updatePeriodHistory, deletePeriodEvents],
+    [cycleLog, updateCycleLog, deletePeriodEvents],
   )
 
-  const reversedAndAugmentedHistory = [...periodHistory].reverse().map((period, index, array) => ({
-    ...period,
+  const reversedAndAugmentedHistory = [...cycleLog].reverse().map((entry, index, array) => ({
+    ...entry,
     ...(index < array.length - 1
-      ? { daysSinceLastPeriod: differenceInDays(period.date, array[index + 1]!.date) }
+      ? { daysSinceLastPeriod: differenceInDays(entry.date, array[index + 1]!.date) }
       : {}),
   }))
 

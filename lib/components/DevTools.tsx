@@ -10,7 +10,7 @@ const offset = () => {
 }
 
 export const DevTools = ({ className }: { className: string }) => {
-  const { updatePeriodHistory } = useAppContext()
+  const { updateCycleLog: updatePeriodHistory } = useAppContext()
 
   const generatePeriodData = () => {
     const first = subDays(new Date(), 12 * 28)

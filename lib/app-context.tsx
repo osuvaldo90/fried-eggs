@@ -7,12 +7,12 @@ import {
   PeriodEventsParams,
   useGoogleCalendar,
 } from './calendar/use-google-calendar'
-import { Period } from './periods/types'
-import { PeriodHistoryAction, usePeriodHistory } from './periods/use-period-history'
+import { CycleLogEntry } from './cycles/types'
+import { CycleLogAction, useCycleLog } from './cycles/use-cycle-log'
 
 type AppContext = {
-  periodHistory: Period[]
-  updatePeriodHistory: Dispatch<PeriodHistoryAction>
+  cycleLog: CycleLogEntry[]
+  updateCycleLog: Dispatch<CycleLogAction>
   getAccessToken: () => Promise<string>
   calendarData: CalendarDataReducerState
   createFriedEggsCalendar: (periodEventsParams?: PeriodEventsParams) => Promise<void>
@@ -21,8 +21,8 @@ type AppContext = {
 }
 
 const AppContext = createContext<AppContext>({
-  periodHistory: [],
-  updatePeriodHistory: () => {},
+  cycleLog: [],
+  updateCycleLog: () => {},
   getAccessToken: async () => '',
   calendarData: 'loading',
   createFriedEggsCalendar: async () => {},
@@ -33,7 +33,7 @@ const AppContext = createContext<AppContext>({
 export const useAppContext = () => useContext(AppContext)
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [periodHistory, updatePeriodHistory] = usePeriodHistory()
+  const [cycleLog, updateCycleLog] = useCycleLog()
   const { getAccessToken } = useGoogleAccessToken()
   const gapiClient = useGapiClient()
   const { calendarData, createFriedEggsCalendar, createPeriodEvents, deletePeriodEvents } =
@@ -71,8 +71,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AppContext.Provider
       value={{
-        periodHistory,
-        updatePeriodHistory,
+        cycleLog,
+        updateCycleLog,
         getAccessToken,
         calendarData,
         createFriedEggsCalendar: createFriedEggsCalendarWrapper,

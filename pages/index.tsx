@@ -1,19 +1,19 @@
 import { format } from 'date-fns'
 import { last } from 'lodash'
 import Link from 'next/link'
+import { useCallback } from 'react'
 import { Button } from 'react-bootstrap'
 
 import { useAppContext } from '../lib/app-context'
-import { calculateDangerZone, crunchPeriods, makePeriodEventsParams } from '../lib/periods/lib'
+import { calculateDangerZone, crunchPeriods, makePeriodEventsParams } from '../lib/cycles/lib'
 
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
 const App = () => {
-  const { periodHistory, calendarData, createFriedEggsCalendar, createPeriodEvents } =
-    useAppContext()
+  const { cycleLog, calendarData, createFriedEggsCalendar, createPeriodEvents } = useAppContext()
 
-  const statistics = crunchPeriods(periodHistory)
-  const lastPeriod = last(periodHistory)
+  const statistics = crunchPeriods(cycleLog)
+  const lastPeriod = last(cycleLog)
   const dangerZone = lastPeriod ? calculateDangerZone(lastPeriod) : undefined
 
   const hasNextPeriodEvent =
@@ -29,7 +29,7 @@ const App = () => {
   const showAddNextPeriodEvent =
     lastPeriod && typeof calendarData === 'object' && (!hasNextPeriodEvent || !hasDangerZoneEvent)
 
-  const addEvents = async () => {
+  const addEvents = useCallback(async () => {
     if (!lastPeriod) return
     const params = {
       periodId: lastPeriod?.id,
@@ -39,7 +39,14 @@ const App = () => {
         : { dangerZone: { start: dangerZone.start, end: dangerZone.end } }),
     }
     await createPeriodEvents(params)
-  }
+  }, [
+    lastPeriod,
+    statistics,
+    dangerZone,
+    createPeriodEvents,
+    hasNextPeriodEvent,
+    hasDangerZoneEvent,
+  ])
 
   return (
     <>
@@ -78,7 +85,7 @@ const App = () => {
         <Button
           className="p-0 mb-3"
           variant="link"
-          onClick={() => createFriedEggsCalendar(makePeriodEventsParams(periodHistory))}
+          onClick={() => createFriedEggsCalendar(makePeriodEventsParams(cycleLog))}
         >
           Add to Google calendar
         </Button>

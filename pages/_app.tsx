@@ -40,8 +40,8 @@ export default function App({ Component, pageProps }: AppProps) {
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item>
-                <Nav.Link as={Link} href="/periods">
-                  Periods
+                <Nav.Link as={Link} href="/cycles">
+                  Cycles
                 </Nav.Link>
               </Nav.Item>
             </Nav>
