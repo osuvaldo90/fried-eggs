@@ -1,7 +1,7 @@
 import { addDays, differenceInDays } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
 
-import { Period } from './types'
+import { CycleLogEntry, Period, isPeriod } from './types'
 
 const median = (nums: number[]) => {
   if (nums.length === 0) return 0
@@ -39,7 +39,8 @@ export const calculateDangerZone = (period: Period) => {
   return { start, end }
 }
 
-export const makePeriodEventsParams = (periodHistory: Period[]) => {
+export const makePeriodEventsParams = (cycleLog: CycleLogEntry[]) => {
+  const periodHistory = cycleLog.filter(isPeriod)
   const lastPeriod = last(periodHistory)
 
   if (!lastPeriod) return undefined

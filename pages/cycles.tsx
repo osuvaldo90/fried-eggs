@@ -55,6 +55,7 @@ const History = () => {
     ) => {
       const period = {
         id: uuid.v4(),
+        type: 'period' as const,
         date: parse(periodDate, 'yyyy-MM-dd', new Date()),
         notes: periodNotes,
       }

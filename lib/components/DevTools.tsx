@@ -19,6 +19,7 @@ export const DevTools = ({ className }: { className: string }) => {
         type: 'add-period',
         period: {
           id: uuid.v4(),
+          type: 'period',
           date: addDays(first, i * (28 - offset())),
           notes: `notes for period ${i}`,
         },

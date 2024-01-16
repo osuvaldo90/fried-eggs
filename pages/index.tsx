@@ -6,14 +6,16 @@ import { Button } from 'react-bootstrap'
 
 import { useAppContext } from '../lib/app-context'
 import { calculateDangerZone, crunchPeriods, makePeriodEventsParams } from '../lib/cycles/lib'
+import { isPeriod } from '../lib/cycles/types'
 
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
 const App = () => {
   const { cycleLog, calendarData, createFriedEggsCalendar, createPeriodEvents } = useAppContext()
 
-  const statistics = crunchPeriods(cycleLog)
-  const lastPeriod = last(cycleLog)
+  const periodHistory = cycleLog.filter(isPeriod)
+  const statistics = crunchPeriods(periodHistory)
+  const lastPeriod = last(periodHistory)
   const dangerZone = lastPeriod ? calculateDangerZone(lastPeriod) : undefined
 
   const hasNextPeriodEvent =
@@ -85,7 +87,7 @@ const App = () => {
         <Button
           className="p-0 mb-3"
           variant="link"
-          onClick={() => createFriedEggsCalendar(makePeriodEventsParams(cycleLog))}
+          onClick={() => createFriedEggsCalendar(makePeriodEventsParams(periodHistory))}
         >
           Add to Google calendar
         </Button>
