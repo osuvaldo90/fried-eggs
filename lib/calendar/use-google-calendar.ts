@@ -18,7 +18,7 @@ type CalendarDataAction =
     }
   | {
       type: 'new-danger-zone-event'
-      periodId: string
+      periodId?: string
       eventId: string
       ovulationId?: string
     }
@@ -38,6 +38,11 @@ type CalendarDataAction =
       eventIds: string[]
     }
 
+export type CreateFriedEggsCalendarParams = {
+  periodEventsParams?: NewPeriodEventsParams
+  ovulationEventParams?: NewOvulationEventParams
+}
+
 export type NewPeriodEventsParams = {
   periodId: string
   dangerZone?: {
@@ -48,8 +53,8 @@ export type NewPeriodEventsParams = {
 }
 
 export type NewOvulationEventParams = {
-  ovulationEntryId: string
-  periodLogEntryId: string
+  ovulationLogEntryId: string
+  periodLogEntryId?: string
   dangerZone: {
     start: Date
     end: Date
@@ -58,7 +63,7 @@ export type NewOvulationEventParams = {
 
 export type CreateFriedEggsCalendar = (
   client: typeof gapi.client,
-  periodEventsParams?: NewPeriodEventsParams,
+  params: CreateFriedEggsCalendarParams,
 ) => Promise<void>
 
 export type CreatePeriodEvents = (
@@ -166,7 +171,15 @@ export const useGoogleCalendar = (): {
     async (
       gapiClient: typeof gapi.client,
       calendarId: string,
-      dangerZone: { start: Date; end: Date },
+      {
+        periodLogEntryId,
+        ovulationLogEntryId,
+        dangerZone,
+      }: {
+        periodLogEntryId?: string
+        ovulationLogEntryId?: string
+        dangerZone: { start: Date; end: Date }
+      },
     ) => {
       const dangerZoneEventRequest = {
         calendarId,
@@ -180,7 +193,16 @@ export const useGoogleCalendar = (): {
           },
         },
       }
-      return gapiClient.calendar.events.insert(dangerZoneEventRequest)
+      const event = await gapiClient.calendar.events.insert(dangerZoneEventRequest)
+
+      updateCalendarData({
+        type: 'new-danger-zone-event',
+        periodId: periodLogEntryId,
+        ovulationId: ovulationLogEntryId,
+        eventId: event.result.id as string,
+      })
+
+      return event
     },
     [],
   )
@@ -192,15 +214,9 @@ export const useGoogleCalendar = (): {
       { periodId, dangerZone, nextPeriodStart }: NewPeriodEventsParams,
     ) => {
       if (dangerZone) {
-        const dangerZoneEventResponse = await createDangerZoneEvent(
-          gapiClient,
-          calendarId,
+        await createDangerZoneEvent(gapiClient, calendarId, {
           dangerZone,
-        )
-        updateCalendarData({
-          type: 'new-danger-zone-event',
-          periodId,
-          eventId: dangerZoneEventResponse.result.id as string,
+          periodLogEntryId: periodId,
         })
       }
 
@@ -275,7 +291,7 @@ export const useGoogleCalendar = (): {
   const createFriedEggsCalendar = useCallback(
     async (
       gapiClient: typeof gapi.client,
-      periodEventsParams: NewPeriodEventsParams | undefined,
+      { periodEventsParams, ovulationEventParams }: CreateFriedEggsCalendarParams,
     ) => {
       const createCalendarResponse = await gapiClient.calendar.calendars.insert({
         summary: 'Fried Eggs',
@@ -286,14 +302,22 @@ export const useGoogleCalendar = (): {
       if (periodEventsParams) {
         await createPeriodEvents(gapiClient, calendarId, periodEventsParams)
       }
+
+      if (ovulationEventParams) {
+        await createDangerZoneEvent(gapiClient, calendarId, {
+          periodLogEntryId: ovulationEventParams.periodLogEntryId,
+          ovulationLogEntryId: ovulationEventParams.ovulationLogEntryId,
+          dangerZone: ovulationEventParams.dangerZone,
+        })
+      }
     },
-    [createPeriodEvents],
+    [createPeriodEvents, createDangerZoneEvent],
   )
 
   const updateDangerZoneEvent = useCallback(
     async (
       gapiClient: typeof gapi.client,
-      { periodLogEntryId, ovulationEntryId, dangerZone }: NewOvulationEventParams,
+      { periodLogEntryId, ovulationLogEntryId, dangerZone }: NewOvulationEventParams,
     ) => {
       if (typeof calendarData !== 'object') return
 
@@ -325,19 +349,13 @@ export const useGoogleCalendar = (): {
         updateCalendarData({
           type: 'update-danger-zone-event',
           eventId: dangerZoneEventId,
-          ovulationId: ovulationEntryId,
+          ovulationId: ovulationLogEntryId,
         })
       } else {
-        const dangerZoneEventResponse = await createDangerZoneEvent(
-          gapiClient,
-          calendarData.calendarId,
+        await createDangerZoneEvent(gapiClient, calendarData.calendarId, {
+          periodLogEntryId,
+          ovulationLogEntryId: ovulationLogEntryId,
           dangerZone,
-        )
-        updateCalendarData({
-          type: 'new-danger-zone-event',
-          periodId: periodLogEntryId,
-          ovulationId: ovulationEntryId,
-          eventId: dangerZoneEventResponse.result.id as string,
         })
       }
     },

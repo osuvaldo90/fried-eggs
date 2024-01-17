@@ -1,8 +1,8 @@
 export type CalendarData = {
   calendarId: string
   dangerZoneEvents: Array<{
-    periodId: string
     eventId: string
+    periodId?: string
     ovulationId?: string
   }>
   nextPeriodEvents?: Array<{

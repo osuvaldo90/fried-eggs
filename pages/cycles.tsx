@@ -95,20 +95,36 @@ const Cycles = () => {
 
       const periodHistory = cycleLog.filter(isPeriod)
       const lastPeriod = last(periodHistory)
-      const params = makePeriodEventsParams(periodHistory)
+      const periodEventsParams = makePeriodEventsParams(periodHistory)
+      const ovulationEventParams =
+        lastEntry.type === 'ovulation'
+          ? {
+              ovulationLogEntryId: lastEntry.id,
+              periodLogEntryId: lastPeriod?.id,
+              dangerZone: calculateDangerZoneFromOvulationDate(lastEntry.date),
+            }
+          : undefined
 
       if (nextAction === 'create-calendar') {
         setNextAction(undefined)
         setLastEntry(undefined)
-        await createFriedEggsCalendar(params)
+        console.log('creating calendar for', lastEntry)
+        await createFriedEggsCalendar({
+          periodEventsParams,
+          ovulationEventParams,
+        })
         setCreatingCalendar(false)
         setShowConnectGoogleModal(false)
       }
 
-      if (lastPeriod?.id === lastEntry.id && params && nextAction === 'create-period-events') {
+      if (
+        lastPeriod?.id === lastEntry.id &&
+        periodEventsParams &&
+        nextAction === 'create-period-events'
+      ) {
         setNextAction(undefined)
         setLastEntry(undefined)
-        await createPeriodEvents(params)
+        await createPeriodEvents(periodEventsParams)
       }
 
       if (lastEntry.type === 'ovulation' && nextAction === 'update-danger-zone-event') {
@@ -123,7 +139,7 @@ const Cycles = () => {
         if (lastPeriodEntry) {
           await updateDangerZoneEvent({
             periodLogEntryId: lastPeriodEntry.id,
-            ovulationEntryId: lastEntry.id,
+            ovulationLogEntryId: lastEntry.id,
             dangerZone: calculateDangerZoneFromOvulationDate(lastEntry.date),
           })
         }
