@@ -87,7 +87,9 @@ const App = () => {
         <Button
           className="p-0 mb-3"
           variant="link"
-          onClick={() => createFriedEggsCalendar(makePeriodEventsParams(periodHistory))}
+          onClick={() =>
+            createFriedEggsCalendar({ periodEventsParams: makePeriodEventsParams(periodHistory) })
+          }
         >
           Add to Google calendar
         </Button>
