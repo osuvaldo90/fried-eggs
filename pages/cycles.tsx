@@ -2,7 +2,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { differenceInDays, format, parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
-import _, { capitalize } from 'lodash'
+import _, { capitalize, last } from 'lodash'
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Fade, ListGroup, Modal } from 'react-bootstrap'
 import * as uuid from 'uuid'
@@ -12,7 +12,7 @@ import { useAppContext } from '../lib/app-context'
 import { AddLogEntryForm, AddLogEntryFormValues } from '../lib/components/AddLogEntryForm'
 import { serializeCycleLog } from '../lib/cycles/data'
 import { calculateDangerZoneFromOvulationDate, makePeriodEventsParams } from '../lib/cycles/lib'
-import { CycleLogEntry, logEntryTypes } from '../lib/cycles/types'
+import { CycleLogEntry, isPeriod, logEntryTypes } from '../lib/cycles/types'
 
 const validationSchema = yup.object({
   logEntryType: yup
@@ -93,7 +93,9 @@ const Cycles = () => {
       if (!lastEntry) return
       if (!cycleLog.find((period) => period.id === lastEntry.id)) return
 
-      const params = makePeriodEventsParams(cycleLog)
+      const periodHistory = cycleLog.filter(isPeriod)
+      const lastPeriod = last(periodHistory)
+      const params = makePeriodEventsParams(periodHistory)
 
       if (nextAction === 'create-calendar') {
         setNextAction(undefined)
@@ -103,7 +105,7 @@ const Cycles = () => {
         setShowConnectGoogleModal(false)
       }
 
-      if (params && nextAction === 'create-period-events') {
+      if (lastPeriod?.id === lastEntry.id && params && nextAction === 'create-period-events') {
         setNextAction(undefined)
         setLastEntry(undefined)
         await createPeriodEvents(params)
