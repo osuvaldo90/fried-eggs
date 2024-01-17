@@ -1,7 +1,9 @@
-export const entryTypes = ['period', 'ovulation'] as const
+export const logEntryTypes = ['period', 'ovulation'] as const
+
+export type LogEntryType = (typeof logEntryTypes)[number]
 
 export type CycleLogEntry = {
-  type: typeof entryTypes[number]
+  type: LogEntryType
   id: string
   date: Date
   notes?: string

@@ -3,6 +3,7 @@ export type CalendarData = {
   dangerZoneEvents: Array<{
     periodId: string
     eventId: string
+    ovulationId?: string
   }>
   nextPeriodEvents?: Array<{
     periodId: string

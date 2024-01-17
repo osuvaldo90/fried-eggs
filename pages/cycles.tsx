@@ -2,19 +2,24 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { differenceInDays, format, parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
+import _, { capitalize } from 'lodash'
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Fade, ListGroup, Modal } from 'react-bootstrap'
 import * as uuid from 'uuid'
 import * as yup from 'yup'
 
 import { useAppContext } from '../lib/app-context'
-import { AddPeriodForm, AddPeriodFormValues } from '../lib/components/AddPeriodForm'
+import { AddLogEntryForm, AddLogEntryFormValues } from '../lib/components/AddLogEntryForm'
 import { serializeCycleLog } from '../lib/cycles/data'
-import { makePeriodEventsParams } from '../lib/cycles/lib'
-import { CycleLogEntry } from '../lib/cycles/types'
+import { calculateDangerZoneFromOvulationDate, makePeriodEventsParams } from '../lib/cycles/lib'
+import { CycleLogEntry, logEntryTypes } from '../lib/cycles/types'
 
 const validationSchema = yup.object({
-  periodDate: yup
+  logEntryType: yup
+    .string()
+    .required()
+    .oneOf([...logEntryTypes]),
+  logEntryDate: yup
     .date()
     .required('Enter a date')
     .test((val, context) => {
@@ -25,14 +30,15 @@ const validationSchema = yup.object({
     }),
 })
 
-const History = () => {
+const Cycles = () => {
   const {
     cycleLog,
     updateCycleLog,
     calendarData,
     createFriedEggsCalendar,
     createPeriodEvents,
-    deletePeriodEvents,
+    deleteLogEntryEvents,
+    updateDangerZoneEvent,
   } = useAppContext()
   const [showSavedToast, setShowSavedToast] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState<string | undefined>()
@@ -41,7 +47,9 @@ const History = () => {
   const [lastEntry, setLastEntry] = useState<CycleLogEntry>()
   const [showConnectGoogleModal, setShowConnectGoogleModal] = useState(false)
   const [creatingCalendar, setCreatingCalendar] = useState(false)
-  const [nextAction, setNextAction] = useState<'create-calendar' | 'create-events'>()
+  const [nextAction, setNextAction] = useState<
+    'create-calendar' | 'create-period-events' | 'update-danger-zone-event'
+  >()
 
   useEffect(() => {
     const blob = new Blob([serializeCycleLog(cycleLog)], { type: 'application/octet-stream' })
@@ -50,18 +58,18 @@ const History = () => {
 
   const handleSubmit = useCallback(
     async (
-      { periodDate, periodNotes }: AddPeriodFormValues,
-      { setSubmitting, resetForm }: FormikHelpers<AddPeriodFormValues>,
+      { logEntryDate, logEntryNotes, logEntryType }: AddLogEntryFormValues,
+      { setSubmitting, resetForm }: FormikHelpers<AddLogEntryFormValues>,
     ) => {
-      const period = {
+      const logEntry = {
         id: uuid.v4(),
-        type: 'period' as const,
-        date: parse(periodDate, 'yyyy-MM-dd', new Date()),
-        notes: periodNotes,
+        type: logEntryType,
+        date: parse(logEntryDate, 'yyyy-MM-dd', new Date()),
+        notes: logEntryNotes,
       }
-      updateCycleLog({ type: 'add-period', period })
-      setLastEntry(period)
-      resetForm()
+      updateCycleLog({ type: 'add-log-entry', logEntry })
+      setLastEntry(logEntry)
+      resetForm({ values: { logEntryType, logEntryDate: '', logEntryNotes: '' } })
       setSubmitting(false)
       setShowSavedToast(true)
       setTimeout(() => setShowSavedToast(false), 3000)
@@ -69,13 +77,17 @@ const History = () => {
       if (calendarData === 'uninitialized') {
         setShowConnectGoogleModal(true)
       } else if (typeof calendarData === 'object') {
-        setNextAction('create-events')
+        if (logEntry.type === 'period') {
+          setNextAction('create-period-events')
+        } else if (logEntry.type === 'ovulation') {
+          setNextAction('update-danger-zone-event')
+        }
       }
     },
     [calendarData, updateCycleLog, setNextAction],
   )
 
-  // wait until period history contains lastPeriod so we get accurate next period start date
+  // wait until period history contains lastEntry so we get accurate next period start date
   useEffect(() => {
     const createCalendarEvents = async () => {
       if (!lastEntry) return
@@ -91,14 +103,39 @@ const History = () => {
         setShowConnectGoogleModal(false)
       }
 
-      if (params && nextAction === 'create-events') {
+      if (params && nextAction === 'create-period-events') {
         setNextAction(undefined)
         setLastEntry(undefined)
         await createPeriodEvents(params)
       }
+
+      if (lastEntry.type === 'ovulation' && nextAction === 'update-danger-zone-event') {
+        setNextAction(undefined)
+        setLastEntry(undefined)
+        console.log('searching for prev period of', lastEntry)
+        const lastPeriodEntry = _(cycleLog)
+          .takeWhile((entry) => entry.id !== lastEntry.id)
+          .reverse()
+          .find((entry) => entry.type === 'period')
+        console.log('found', lastPeriodEntry)
+        if (lastPeriodEntry) {
+          await updateDangerZoneEvent({
+            periodLogEntryId: lastPeriodEntry.id,
+            ovulationEntryId: lastEntry.id,
+            dangerZone: calculateDangerZoneFromOvulationDate(lastEntry.date),
+          })
+        }
+      }
     }
     createCalendarEvents()
-  }, [cycleLog, lastEntry, nextAction, createFriedEggsCalendar, createPeriodEvents])
+  }, [
+    cycleLog,
+    lastEntry,
+    nextAction,
+    createFriedEggsCalendar,
+    createPeriodEvents,
+    updateDangerZoneEvent,
+  ])
 
   const promptImportDataFile = () => {
     if (importDataFileRef.current) {
@@ -118,35 +155,48 @@ const History = () => {
     [updateCycleLog],
   )
 
-  const handleDeletePeriod = useCallback(
-    async (periodId: string) => {
-      const period = cycleLog.find(({ id }) => id === periodId)
-      if (period) {
-        await deletePeriodEvents(period.id)
+  const handleDeleteLogEntry = useCallback(
+    async (logEntryId: string) => {
+      console.log('searching for entry', logEntryId)
+      const entry = cycleLog.find(({ id }) => id === logEntryId)
+      console.log('found', entry)
+      if (entry) {
+        await deleteLogEntryEvents(entry.id, entry.type)
       }
-      updateCycleLog({ type: 'delete-event', id: periodId })
+      updateCycleLog({ type: 'delete-event', id: logEntryId })
     },
-    [cycleLog, updateCycleLog, deletePeriodEvents],
+    [cycleLog, updateCycleLog, deleteLogEntryEvents],
   )
 
-  const reversedAndAugmentedHistory = [...cycleLog].reverse().map((entry, index, array) => ({
-    ...entry,
-    ...(index < array.length - 1
-      ? { daysSinceLastPeriod: differenceInDays(entry.date, array[index + 1]!.date) }
-      : {}),
-  }))
+  let lastPeriodDate: Date | undefined = undefined
+  const reversedAndAugmentedHistory = [...cycleLog]
+    .map((entry, index, array) => {
+      if (entry.type === 'period') {
+        const daysSinceLastPeriod = lastPeriodDate
+          ? differenceInDays(entry.date, lastPeriodDate)
+          : undefined
+        lastPeriodDate = entry.date
+        return {
+          ...entry,
+          daysSinceLastPeriod,
+        }
+      }
+      return entry
+    })
+    .reverse()
 
   return (
     <>
       <Formik
         initialValues={{
-          periodDate: '',
-          periodNotes: '',
+          logEntryType: 'period',
+          logEntryDate: '',
+          logEntryNotes: '',
         }}
         onSubmit={handleSubmit}
         validationSchema={validationSchema}
       >
-        <AddPeriodForm />
+        <AddLogEntryForm />
       </Formik>
       <Fade in={showSavedToast}>
         <div className="pe-2 text-success text-end">Saved</div>
@@ -154,19 +204,22 @@ const History = () => {
 
       {reversedAndAugmentedHistory.length > 0 && (
         <ListGroup className="mb-3">
-          {reversedAndAugmentedHistory.map(({ id, date, daysSinceLastPeriod, notes }) => (
-            <ListGroup.Item key={id} className="d-flex flex-row">
+          {reversedAndAugmentedHistory.map((entry) => (
+            <ListGroup.Item key={entry.id} className="d-flex flex-row">
+              <div className="me-2">{entry.type === 'ovulation' ? '🍳' : '🩸'}</div>
               <div>
-                <div className="h6">{format(date, 'MMMM do, yyyy')}</div>
-                <div style={{ whiteSpace: 'pre-wrap' }}>{notes}</div>
-                {daysSinceLastPeriod && (
+                <div className="h6">
+                  {capitalize(entry.type)} on {format(entry.date, 'MMMM do, yyyy')}
+                </div>
+                <div style={{ whiteSpace: 'pre-wrap' }}>{entry.notes}</div>
+                {'daysSinceLastPeriod' in entry && entry.daysSinceLastPeriod && (
                   <div className="text-secondary fs-6">
-                    {daysSinceLastPeriod} days since last period
+                    {entry.daysSinceLastPeriod} days since last period
                   </div>
                 )}
               </div>
               <div className="ms-auto my-auto">
-                <Button variant="outline-danger" onClick={() => handleDeletePeriod(id)}>
+                <Button variant="outline-danger" onClick={() => handleDeleteLogEntry(entry.id)}>
                   <FontAwesomeIcon icon={faTrash} />
                 </Button>
               </div>
@@ -232,4 +285,4 @@ const History = () => {
   )
 }
 
-export default History
+export default Cycles

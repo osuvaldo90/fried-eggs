@@ -2,15 +2,15 @@ import { sortBy } from 'lodash'
 import { Reducer, useEffect, useReducer } from 'react'
 
 import { deserializeCycleLog, serializeCycleLog } from './data'
-import { CycleLogEntry, Period } from './types'
+import { CycleLogEntry } from './types'
 
 export type CycleLogAction =
   | {
       type: 'load'
     }
   | {
-      type: 'add-period'
-      period: Period
+      type: 'add-log-entry'
+      logEntry: CycleLogEntry
     }
   | {
       type: 'delete-event'
@@ -50,8 +50,8 @@ export const useCycleLog = () => {
         }
       }
 
-      if (action.type === 'add-period') {
-        const newCycleLog = sortBy([...current, action.period], (entry) => entry.date)
+      if (action.type === 'add-log-entry') {
+        const newCycleLog = sortBy([...current, action.logEntry], (entry) => entry.date)
         window.localStorage.setItem('cycleLog', serializeCycleLog(newCycleLog))
         return newCycleLog
       }

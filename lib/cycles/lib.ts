@@ -1,4 +1,4 @@
-import { addDays, differenceInDays } from 'date-fns'
+import { addDays, differenceInDays, subDays } from 'date-fns'
 import _, { last, mean, zip } from 'lodash'
 
 import { CycleLogEntry, Period, isPeriod } from './types'
@@ -31,6 +31,12 @@ export const crunchPeriods = (periodHistory: Period[]) => {
     medianCycleLength,
     nextPeriodStart: addDays(last(periodHistory)!.date, medianCycleLength),
   }
+}
+
+export const calculateDangerZoneFromOvulationDate = (ovulationDate: Date) => {
+  const start = subDays(ovulationDate, 2)
+  const end = addDays(ovulationDate, 5)
+  return { start, end }
 }
 
 export const calculateDangerZone = (period: Period) => {

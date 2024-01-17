@@ -1,7 +1,7 @@
 import { format, parse } from 'date-fns'
 import { isNil } from 'lodash'
 
-import { CycleLogEntry, entryTypes } from './types'
+import { CycleLogEntry, LogEntryType, logEntryTypes } from './types'
 
 export const serializeCycleLog = (history: CycleLogEntry[]) =>
   JSON.stringify(
@@ -18,7 +18,7 @@ type OldJsonEntry = {
 }
 
 type NewJsonEntry = {
-  type: typeof entryTypes[number]
+  type: LogEntryType
   id: string
   date: string
   notes?: string
@@ -33,7 +33,8 @@ const isJsonEntry = (x: unknown): x is JsonEntry =>
   typeof x.id === 'string' &&
   'date' in x &&
   typeof x.date === 'string' &&
-  (!('type' in x) || (typeof x.type === 'string' && !!entryTypes.find((type) => type === x.type)))
+  (!('type' in x) ||
+    (typeof x.type === 'string' && !!logEntryTypes.find((type) => type === x.type)))
 
 export const deserializeCycleLog = (data: string) => {
   if (!data) {

@@ -4,10 +4,10 @@ import { useGoogleAccessToken } from './calendar/use-google-access-token'
 import { useGapiClient } from './calendar/use-google-api'
 import {
   CalendarDataReducerState,
-  PeriodEventsParams,
+  NewPeriodEventsParams,
   useGoogleCalendar,
 } from './calendar/use-google-calendar'
-import { CycleLogEntry } from './cycles/types'
+import { CycleLogEntry, LogEntryType } from './cycles/types'
 import { CycleLogAction, useCycleLog } from './cycles/use-cycle-log'
 
 type AppContext = {
@@ -15,9 +15,18 @@ type AppContext = {
   updateCycleLog: Dispatch<CycleLogAction>
   getAccessToken: () => Promise<string>
   calendarData: CalendarDataReducerState
-  createFriedEggsCalendar: (periodEventsParams?: PeriodEventsParams) => Promise<void>
-  createPeriodEvents: (periodEventsParams: PeriodEventsParams) => Promise<void>
-  deletePeriodEvents: (periodId: string) => Promise<void>
+  createFriedEggsCalendar: (periodEventsParams?: NewPeriodEventsParams) => Promise<void>
+  createPeriodEvents: (periodEventsParams: NewPeriodEventsParams) => Promise<void>
+  deleteLogEntryEvents: (logEntryId: string, logEntryType: LogEntryType) => Promise<void>
+  updateDangerZoneEvent: ({
+    periodLogEntryId,
+    ovulationEntryId,
+    dangerZone,
+  }: {
+    periodLogEntryId: string
+    ovulationEntryId: string
+    dangerZone: { start: Date; end: Date }
+  }) => Promise<void>
 }
 
 const AppContext = createContext<AppContext>({
@@ -27,7 +36,8 @@ const AppContext = createContext<AppContext>({
   calendarData: 'loading',
   createFriedEggsCalendar: async () => {},
   createPeriodEvents: async () => {},
-  deletePeriodEvents: async () => {},
+  deleteLogEntryEvents: async () => {},
+  updateDangerZoneEvent: async () => {},
 })
 
 export const useAppContext = () => useContext(AppContext)
@@ -36,11 +46,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [cycleLog, updateCycleLog] = useCycleLog()
   const { getAccessToken } = useGoogleAccessToken()
   const gapiClient = useGapiClient()
-  const { calendarData, createFriedEggsCalendar, createPeriodEvents, deletePeriodEvents } =
-    useGoogleCalendar()
+  const {
+    calendarData,
+    createFriedEggsCalendar,
+    createPeriodEvents,
+    deleteLogEntryEvents,
+    updateDangerZoneEvent,
+  } = useGoogleCalendar()
 
   const createFriedEggsCalendarWrapper = useCallback(
-    async (periodEventsParams?: PeriodEventsParams) => {
+    async (periodEventsParams?: NewPeriodEventsParams) => {
       if (!gapiClient) return
       await getAccessToken()
       await createFriedEggsCalendar(gapiClient, periodEventsParams)
@@ -49,7 +64,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const createPeriodEventsWrapper = useCallback(
-    async (periodEventsParams: PeriodEventsParams) => {
+    async (periodEventsParams: NewPeriodEventsParams) => {
       if (!gapiClient) return
       if (typeof calendarData !== 'object') return
       await getAccessToken()
@@ -58,14 +73,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     [gapiClient, calendarData, getAccessToken, createPeriodEvents],
   )
 
-  const deletePeriodEventsWrapper = useCallback(
-    async (periodId: string) => {
+  const deleteLogEntryEventsWrapper = useCallback(
+    async (logEntryId: string, logEntryType: LogEntryType) => {
       if (!gapiClient) return
       if (typeof calendarData !== 'object') return
       await getAccessToken()
-      await deletePeriodEvents(gapiClient, { periodId })
+      await deleteLogEntryEvents(gapiClient, { logEntryId, logEntryType })
     },
-    [gapiClient, calendarData, getAccessToken, deletePeriodEvents],
+    [gapiClient, calendarData, getAccessToken, deleteLogEntryEvents],
+  )
+
+  const updateDangerZoneEventWrapper = useCallback(
+    async ({
+      periodLogEntryId,
+      ovulationEntryId,
+      dangerZone,
+    }: {
+      periodLogEntryId: string
+      ovulationEntryId: string
+      dangerZone: { start: Date; end: Date }
+    }) => {
+      if (!gapiClient) return
+      if (typeof calendarData !== 'object') return
+      await getAccessToken()
+      await updateDangerZoneEvent(gapiClient, { dangerZone, periodLogEntryId, ovulationEntryId })
+    },
+    [gapiClient, calendarData, getAccessToken, updateDangerZoneEvent],
   )
 
   return (
@@ -77,7 +110,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         calendarData,
         createFriedEggsCalendar: createFriedEggsCalendarWrapper,
         createPeriodEvents: createPeriodEventsWrapper,
-        deletePeriodEvents: deletePeriodEventsWrapper,
+        deleteLogEntryEvents: deleteLogEntryEventsWrapper,
+        updateDangerZoneEvent: updateDangerZoneEventWrapper,
       }}
     >
       {children}

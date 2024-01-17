@@ -2,6 +2,9 @@ import { format } from 'date-fns'
 import { isNil } from 'lodash'
 import { Reducer, useCallback, useEffect, useReducer } from 'react'
 
+import { LogEntryType } from '../cycles/types'
+import { isNotNil } from '../util'
+
 import { deserializeCalendarData, serializeCalendarData } from './data'
 import { CalendarData } from './types'
 
@@ -17,6 +20,7 @@ type CalendarDataAction =
       type: 'new-danger-zone-event'
       periodId: string
       eventId: string
+      ovulationId?: string
     }
   | {
       type: 'new-next-period-event'
@@ -24,11 +28,17 @@ type CalendarDataAction =
       eventId: string
     }
   | {
-      type: 'delete-period-events'
-      periodId: string
+      type: 'update-danger-zone-event'
+      eventId: string
+      ovulationId?: string
+      periodId?: string
+    }
+  | {
+      type: 'delete-events'
+      eventIds: string[]
     }
 
-export type PeriodEventsParams = {
+export type NewPeriodEventsParams = {
   periodId: string
   dangerZone?: {
     start: Date
@@ -37,20 +47,34 @@ export type PeriodEventsParams = {
   nextPeriodStart?: Date
 }
 
+export type NewOvulationEventParams = {
+  ovulationEntryId: string
+  periodLogEntryId: string
+  dangerZone: {
+    start: Date
+    end: Date
+  }
+}
+
 export type CreateFriedEggsCalendar = (
   client: typeof gapi.client,
-  periodEventsParams?: PeriodEventsParams,
+  periodEventsParams?: NewPeriodEventsParams,
 ) => Promise<void>
 
 export type CreatePeriodEvents = (
   client: typeof gapi.client,
   calendarId: string,
-  periodEventsParams: PeriodEventsParams,
+  periodEventsParams: NewPeriodEventsParams,
 ) => Promise<void>
 
-export type DeletePeriodEvents = (
+export type DeleteLogEntryEvents = (
   client: typeof gapi.client,
-  params: { periodId: string },
+  params: { logEntryId: string; logEntryType: LogEntryType },
+) => Promise<void>
+
+export type UpdateDangerZoneEvent = (
+  client: typeof gapi.client,
+  params: NewOvulationEventParams,
 ) => Promise<void>
 
 const calendarDataReducer = (current: CalendarDataReducerState, action: CalendarDataAction) => {
@@ -73,7 +97,7 @@ const calendarDataReducer = (current: CalendarDataReducerState, action: Calendar
       ...current,
       dangerZoneEvents: [
         ...current.dangerZoneEvents,
-        { periodId: action.periodId, eventId: action.eventId },
+        { periodId: action.periodId, eventId: action.eventId, ovulationId: action.ovulationId },
       ],
     }
     window.localStorage.setItem('calendarData', serializeCalendarData(newCalendarData))
@@ -92,15 +116,33 @@ const calendarDataReducer = (current: CalendarDataReducerState, action: Calendar
     return newCalendarData
   }
 
-  if (action.type === 'delete-period-events') {
+  if (action.type === 'delete-events') {
     const newCalendarData: CalendarData = {
       ...current,
       dangerZoneEvents: current.dangerZoneEvents.filter(
-        (event) => event.periodId !== action.periodId,
+        (event) => !action.eventIds.includes(event.eventId),
       ),
       nextPeriodEvents: current.nextPeriodEvents?.filter(
-        (event) => event.periodId !== action.periodId,
+        (event) => !action.eventIds.includes(event.eventId),
       ),
+    }
+    window.localStorage.setItem('calendarData', serializeCalendarData(newCalendarData))
+    return newCalendarData
+  }
+
+  if (action.type === 'update-danger-zone-event') {
+    const newCalendarData: CalendarData = {
+      ...current,
+      dangerZoneEvents: current.dangerZoneEvents.map((event) => {
+        if (event.eventId === action.eventId) {
+          return {
+            ...event,
+            ovulationId: action.ovulationId ?? event.ovulationId,
+            periodId: action.periodId ?? event.periodId,
+          }
+        }
+        return event
+      }),
     }
     window.localStorage.setItem('calendarData', serializeCalendarData(newCalendarData))
     return newCalendarData
@@ -113,33 +155,47 @@ export const useGoogleCalendar = (): {
   calendarData: CalendarDataReducerState
   createFriedEggsCalendar: CreateFriedEggsCalendar
   createPeriodEvents: CreatePeriodEvents
-  deletePeriodEvents: DeletePeriodEvents
+  deleteLogEntryEvents: DeleteLogEntryEvents
+  updateDangerZoneEvent: UpdateDangerZoneEvent
 } => {
   const [calendarData, updateCalendarData] = useReducer<
     Reducer<CalendarDataReducerState, CalendarDataAction>
   >(calendarDataReducer, 'loading')
 
+  const createDangerZoneEvent = useCallback(
+    async (
+      gapiClient: typeof gapi.client,
+      calendarId: string,
+      dangerZone: { start: Date; end: Date },
+    ) => {
+      const dangerZoneEventRequest = {
+        calendarId,
+        resource: {
+          summary: '🚨🍳🚨',
+          start: {
+            date: format(dangerZone.start, 'yyyy-MM-dd'),
+          },
+          end: {
+            date: format(dangerZone.end, 'yyyy-MM-dd'),
+          },
+        },
+      }
+      return gapiClient.calendar.events.insert(dangerZoneEventRequest)
+    },
+    [],
+  )
+
   const createPeriodEvents = useCallback(
     async (
       gapiClient: typeof gapi.client,
       calendarId: string,
-      { periodId, dangerZone, nextPeriodStart }: PeriodEventsParams,
+      { periodId, dangerZone, nextPeriodStart }: NewPeriodEventsParams,
     ) => {
       if (dangerZone) {
-        const dangerZoneEventRequest = {
+        const dangerZoneEventResponse = await createDangerZoneEvent(
+          gapiClient,
           calendarId,
-          resource: {
-            summary: '🚨🍳🚨',
-            start: {
-              date: format(dangerZone.start, 'yyyy-MM-dd'),
-            },
-            end: {
-              date: format(dangerZone.end, 'yyyy-MM-dd'),
-            },
-          },
-        }
-        const dangerZoneEventResponse = await gapiClient.calendar.events.insert(
-          dangerZoneEventRequest,
+          dangerZone,
         )
         updateCalendarData({
           type: 'new-danger-zone-event',
@@ -161,9 +217,8 @@ export const useGoogleCalendar = (): {
             },
           },
         }
-        const nextPeriodEventResponse = await gapiClient.calendar.events.insert(
-          nextPeriodEventRequest,
-        )
+        const nextPeriodEventResponse =
+          await gapiClient.calendar.events.insert(nextPeriodEventRequest)
 
         updateCalendarData({
           type: 'new-next-period-event',
@@ -172,16 +227,23 @@ export const useGoogleCalendar = (): {
         })
       }
     },
-    [],
+    [createDangerZoneEvent],
   )
 
-  const deletePeriodEvents = useCallback(
-    async (gapiClient: typeof gapi.client, { periodId }: { periodId: string }) => {
+  const deleteLogEntryEvents = useCallback(
+    async (
+      gapiClient: typeof gapi.client,
+      { logEntryId, logEntryType }: { logEntryId: string; logEntryType: LogEntryType },
+    ) => {
       if (typeof calendarData !== 'object') return
 
-      const dangerZoneEventId = calendarData.dangerZoneEvents.find(
-        (e) => e.periodId === periodId,
-      )?.eventId
+      const dangerZoneEventId = calendarData.dangerZoneEvents.find((e) => {
+        if (logEntryType === 'period') {
+          return e.periodId === logEntryId && e.ovulationId === undefined
+        }
+        return e.ovulationId === logEntryId
+      })?.eventId
+
       if (dangerZoneEventId) {
         // @ts-expect-error
         await gapiClient.calendar.events.delete({
@@ -191,8 +253,9 @@ export const useGoogleCalendar = (): {
       }
 
       const nextPeriodEventId = calendarData.nextPeriodEvents?.find(
-        (e) => e.periodId === periodId,
+        (e) => logEntryType === 'period' && e.periodId === logEntryId,
       )?.eventId
+
       if (nextPeriodEventId) {
         // @ts-expect-error
         await gapiClient.calendar.events.delete({
@@ -201,13 +264,19 @@ export const useGoogleCalendar = (): {
         })
       }
 
-      updateCalendarData({ type: 'delete-period-events', periodId })
+      updateCalendarData({
+        type: 'delete-events',
+        eventIds: [dangerZoneEventId, nextPeriodEventId].filter(isNotNil),
+      })
     },
     [calendarData],
   )
 
   const createFriedEggsCalendar = useCallback(
-    async (gapiClient: typeof gapi.client, periodEventsParams: PeriodEventsParams | undefined) => {
+    async (
+      gapiClient: typeof gapi.client,
+      periodEventsParams: NewPeriodEventsParams | undefined,
+    ) => {
       const createCalendarResponse = await gapiClient.calendar.calendars.insert({
         summary: 'Fried Eggs',
       })
@@ -221,6 +290,60 @@ export const useGoogleCalendar = (): {
     [createPeriodEvents],
   )
 
+  const updateDangerZoneEvent = useCallback(
+    async (
+      gapiClient: typeof gapi.client,
+      { periodLogEntryId, ovulationEntryId, dangerZone }: NewOvulationEventParams,
+    ) => {
+      if (typeof calendarData !== 'object') return
+
+      console.log('searching for danger zone event id')
+      const dangerZoneEventId = calendarData.dangerZoneEvents.find(
+        (event) => event.periodId === periodLogEntryId,
+      )?.eventId
+      console.log('found', dangerZoneEventId)
+
+      if (dangerZoneEventId) {
+        const eventResponse = await gapiClient.calendar.events.get({
+          calendarId: calendarData.calendarId,
+          eventId: dangerZoneEventId,
+        })
+        const event = eventResponse.result
+        await gapiClient.calendar.events.update({
+          calendarId: calendarData.calendarId,
+          eventId: dangerZoneEventId,
+          resource: {
+            ...event,
+            start: {
+              date: format(dangerZone.start, 'yyyy-MM-dd'),
+            },
+            end: {
+              date: format(dangerZone.end, 'yyyy-MM-dd'),
+            },
+          },
+        })
+        updateCalendarData({
+          type: 'update-danger-zone-event',
+          eventId: dangerZoneEventId,
+          ovulationId: ovulationEntryId,
+        })
+      } else {
+        const dangerZoneEventResponse = await createDangerZoneEvent(
+          gapiClient,
+          calendarData.calendarId,
+          dangerZone,
+        )
+        updateCalendarData({
+          type: 'new-danger-zone-event',
+          periodId: periodLogEntryId,
+          ovulationId: ovulationEntryId,
+          eventId: dangerZoneEventResponse.result.id as string,
+        })
+      }
+    },
+    [calendarData, createDangerZoneEvent],
+  )
+
   useEffect(() => {
     updateCalendarData({ type: 'load' })
   }, [])
@@ -229,6 +352,7 @@ export const useGoogleCalendar = (): {
     calendarData,
     createFriedEggsCalendar,
     createPeriodEvents,
-    deletePeriodEvents,
+    deleteLogEntryEvents,
+    updateDangerZoneEvent,
   }
 }

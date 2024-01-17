@@ -10,20 +10,21 @@ const offset = () => {
 }
 
 export const DevTools = ({ className }: { className: string }) => {
-  const { updateCycleLog: updatePeriodHistory } = useAppContext()
+  const { updateCycleLog } = useAppContext()
 
   const generatePeriodData = () => {
-    const first = subDays(new Date(), 12 * 28)
+    let date = addDays(new Date(), offset())
     for (let i = 0; i < 14; i++) {
-      updatePeriodHistory({
-        type: 'add-period',
-        period: {
+      updateCycleLog({
+        type: 'add-log-entry',
+        logEntry: {
           id: uuid.v4(),
           type: 'period',
-          date: addDays(first, i * (28 - offset())),
+          date,
           notes: `notes for period ${i}`,
         },
       })
+      date = subDays(date, 28 + offset())
     }
   }
 
