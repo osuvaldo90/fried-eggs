@@ -70,7 +70,7 @@ const App = () => {
         <div>
           <p>No period data available.</p>
           <p>
-            <Link href="/periods">Add your last period</Link> to get started.
+            <Link href="/cycles">Add your last period</Link> to get started.
           </p>
         </div>
       )}
