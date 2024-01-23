@@ -36,7 +36,7 @@ export const useGoogleAccessToken = () => {
     gsi.src = '//accounts.google.com/gsi/client'
     gsi.async = true
     gsi.defer = true
-    element.parentNode!.insertBefore(gsi, element)
+    element?.parentNode?.insertBefore(gsi, element)
     gsi.onload = () => {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
       if (!clientId) return

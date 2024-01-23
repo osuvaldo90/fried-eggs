@@ -67,6 +67,7 @@ const Cycles = () => {
         date: parse(logEntryDate, 'yyyy-MM-dd', new Date()),
         notes: logEntryNotes,
       }
+
       updateCycleLog({ type: 'add-log-entry', logEntry })
       setLastEntry(logEntry)
       resetForm({ values: { logEntryType, logEntryDate: '', logEntryNotes: '' } })
@@ -108,7 +109,7 @@ const Cycles = () => {
       if (nextAction === 'create-calendar') {
         setNextAction(undefined)
         setLastEntry(undefined)
-        console.log('creating calendar for', lastEntry)
+
         await createFriedEggsCalendar({
           periodEventsParams,
           ovulationEventParams,
@@ -130,12 +131,12 @@ const Cycles = () => {
       if (lastEntry.type === 'ovulation' && nextAction === 'update-danger-zone-event') {
         setNextAction(undefined)
         setLastEntry(undefined)
-        console.log('searching for prev period of', lastEntry)
+
         const lastPeriodEntry = _(cycleLog)
           .takeWhile((entry) => entry.id !== lastEntry.id)
           .reverse()
           .find((entry) => entry.type === 'period')
-        console.log('found', lastPeriodEntry)
+
         if (lastPeriodEntry) {
           await updateDangerZoneEvent({
             periodLogEntryId: lastPeriodEntry.id,
@@ -175,9 +176,8 @@ const Cycles = () => {
 
   const handleDeleteLogEntry = useCallback(
     async (logEntryId: string) => {
-      console.log('searching for entry', logEntryId)
       const entry = cycleLog.find(({ id }) => id === logEntryId)
-      console.log('found', entry)
+
       if (entry) {
         await deleteLogEntryEvents(entry.id, entry.type)
       }
@@ -221,7 +221,7 @@ const Cycles = () => {
       </Fade>
 
       {reversedAndAugmentedHistory.length > 0 && (
-        <ListGroup className="mb-3">
+        <ListGroup className="mb-3" data-testid="cycle-log">
           {reversedAndAugmentedHistory.map((entry) => (
             <ListGroup.Item key={entry.id} className="d-flex flex-row">
               <div className="me-2">{entry.type === 'ovulation' ? '🍳' : '🩸'}</div>

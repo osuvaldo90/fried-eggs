@@ -20,8 +20,9 @@ export const makeInput = <TValues extends Record<string, string>>() => {
     const error = name in errors ? String(errors[name]) : undefined
     return (
       <Form.Group className={className}>
-        <Form.Label>{label}</Form.Label>
+        <Form.Label htmlFor={name}>{label}</Form.Label>
         <Form.Control
+          id={name}
           as={type === 'textarea' ? 'textarea' : undefined}
           name={name}
           type={type}

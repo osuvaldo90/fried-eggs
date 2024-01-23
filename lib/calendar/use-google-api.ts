@@ -22,7 +22,7 @@ export const useGapiClient = () => {
     gapiJs.src = '//apis.google.com/js/api.js'
     gapiJs.async = true
     gapiJs.defer = true
-    element.parentNode!.insertBefore(gapiJs, element)
+    element?.parentNode?.insertBefore(gapiJs, element)
     gapiJs.onload = () => {
       gapi.load('client', async () => {
         const apiKey = process.env.NEXT_PUBLIC_API_KEY

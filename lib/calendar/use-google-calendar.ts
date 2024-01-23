@@ -321,11 +321,9 @@ export const useGoogleCalendar = (): {
     ) => {
       if (typeof calendarData !== 'object') return
 
-      console.log('searching for danger zone event id')
       const dangerZoneEventId = calendarData.dangerZoneEvents.find(
         (event) => event.periodId === periodLogEntryId,
       )?.eventId
-      console.log('found', dangerZoneEventId)
 
       if (dangerZoneEventId) {
         const eventResponse = await gapiClient.calendar.events.get({

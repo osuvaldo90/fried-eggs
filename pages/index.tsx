@@ -10,7 +10,7 @@ import { isPeriod } from '../lib/cycles/types'
 
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
-const App = () => {
+const Home = () => {
   const { cycleLog, calendarData, createFriedEggsCalendar, createPeriodEvents } = useAppContext()
 
   const periodHistory = cycleLog.filter(isPeriod)
@@ -51,14 +51,14 @@ const App = () => {
   ])
 
   return (
-    <>
+    <div data-testid="stats">
       {lastPeriod && dangerZone ? (
         <>
           <p>
             Your last period was on <span className="fw-bold">{formatDate(lastPeriod.date)}</span>.
           </p>
           <p className="text-danger">
-            Your danger zone is
+            Your danger zone is&nbsp;
             <br />
             <span className="fw-bold">
               {formatDate(dangerZone.start)} – {formatDate(dangerZone.end)}
@@ -67,17 +67,17 @@ const App = () => {
           </p>
         </>
       ) : (
-        <div>
+        <>
           <p>No period data available.</p>
           <p>
             <Link href="/cycles">Add your last period</Link> to get started.
           </p>
-        </div>
+        </>
       )}
 
       {statistics?.nextPeriodStart && (
         <p>
-          Your next period may start on
+          Your next period may start on&nbsp;
           <br />
           <span className="fw-bold">{formatDate(statistics.nextPeriodStart)}</span>
         </p>
@@ -116,8 +116,8 @@ const App = () => {
           <span className="fw-bold">{Math.round(statistics.medianCycleLength)} days</span>
         </p>
       )}
-    </>
+    </div>
   )
 }
 
-export default App
+export default Home

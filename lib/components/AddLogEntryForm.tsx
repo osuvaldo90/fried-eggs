@@ -15,8 +15,6 @@ const Input = makeInput<AddLogEntryFormValues>()
 export const AddLogEntryForm = () => {
   const formik = useFormikContext<AddLogEntryFormValues>()
 
-  console.log('form', formik.values, formik.errors)
-
   const dateLabel =
     formik.values.logEntryType === 'ovulation'
       ? 'When did you start ovulating?'
