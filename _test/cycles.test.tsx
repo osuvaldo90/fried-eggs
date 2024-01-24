@@ -2,10 +2,8 @@ import '@testing-library/jest-dom'
 import { getByRole, getByText, render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
-import { AppProvider } from '../../lib/app-context'
-import Cycles from '../cycles'
-
-jest.setTimeout(100000)
+import { AppProvider } from '../lib/app-context'
+import Cycles from '../pages/cycles'
 
 const logEntry = async (type: 'period' | 'ovulation', date: string) => {
   const typeSwitchButton = screen.getByLabelText(type === 'period' ? 'Period' : 'Ovulation')
