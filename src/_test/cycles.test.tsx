@@ -2,8 +2,8 @@ import '@testing-library/jest-dom'
 import { getByRole, getByText, render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
+import Cycles from '../app/cycles/page'
 import { AppProvider } from '../lib/app-context'
-import Cycles from '../pages/cycles'
 
 import { asMock } from './util'
 

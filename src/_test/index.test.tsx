@@ -1,10 +1,10 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 
+import Home from '../app/page'
 import { AppProvider } from '../lib/app-context'
 import { CycleLogEntry } from '../lib/cycles/types'
 import { useCycleLog } from '../lib/cycles/use-cycle-log'
-import Home from '../pages'
 
 import { asMock } from './util'
 

@@ -1,3 +1,5 @@
+'use client'
+
 import { createContext, ReactNode, useContext, Dispatch, useCallback } from 'react'
 
 import { useGoogleAccessToken } from './calendar/use-google-access-token'

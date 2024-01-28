@@ -1,3 +1,5 @@
+'use client'
+
 import { format } from 'date-fns'
 import { last } from 'lodash'
 import Link from 'next/link'

@@ -1,3 +1,5 @@
+'use client'
+
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { differenceInDays, format, parse } from 'date-fns'
@@ -8,11 +10,11 @@ import { Button, Fade, ListGroup, Modal } from 'react-bootstrap'
 import * as uuid from 'uuid'
 import * as yup from 'yup'
 
-import { useAppContext } from '../lib/app-context'
-import { AddLogEntryForm, AddLogEntryFormValues } from '../lib/components/AddLogEntryForm'
-import { serializeCycleLog } from '../lib/cycles/data'
-import { calculateDangerZoneFromOvulationDate, makePeriodEventsParams } from '../lib/cycles/lib'
-import { CycleLogEntry, isPeriod, logEntryTypes } from '../lib/cycles/types'
+import { useAppContext } from '../../lib/app-context'
+import { AddLogEntryForm, AddLogEntryFormValues } from '../../lib/components/AddLogEntryForm'
+import { serializeCycleLog } from '../../lib/cycles/data'
+import { calculateDangerZoneFromOvulationDate, makePeriodEventsParams } from '../../lib/cycles/lib'
+import { CycleLogEntry, isPeriod, logEntryTypes } from '../../lib/cycles/types'
 
 const validationSchema = yup.object({
   logEntryType: yup
