@@ -261,7 +261,7 @@ export const useGoogleCalendar = (): {
       })?.eventId
 
       if (dangerZoneEventId) {
-        // @ts-expect-error
+        // @ts-expect-error not defining delete because lazy
         await gapiClient.calendar.events.delete({
           calendarId: calendarData.calendarId,
           eventId: dangerZoneEventId,
@@ -273,7 +273,7 @@ export const useGoogleCalendar = (): {
       )?.eventId
 
       if (nextPeriodEventId) {
-        // @ts-expect-error
+        // @ts-expect-error not defining delete because lazy
         await gapiClient.calendar.events.delete({
           calendarId: calendarData.calendarId,
           eventId: nextPeriodEventId,

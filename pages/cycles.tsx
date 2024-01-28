@@ -188,7 +188,7 @@ const Cycles = () => {
 
   let lastPeriodDate: Date | undefined = undefined
   const reversedAndAugmentedHistory = [...cycleLog]
-    .map((entry, index, array) => {
+    .map((entry) => {
       if (entry.type === 'period') {
         const daysSinceLastPeriod = lastPeriodDate
           ? differenceInDays(entry.date, lastPeriodDate)

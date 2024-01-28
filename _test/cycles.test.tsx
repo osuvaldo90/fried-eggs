@@ -5,6 +5,8 @@ import { userEvent } from '@testing-library/user-event'
 import { AppProvider } from '../lib/app-context'
 import Cycles from '../pages/cycles'
 
+import { asMock } from './util'
+
 const logEntry = async (type: 'period' | 'ovulation', date: string) => {
   const typeSwitchButton = screen.getByLabelText(type === 'period' ? 'Period' : 'Ovulation')
   await userEvent.click(typeSwitchButton)
@@ -29,7 +31,7 @@ describe(Cycles, () => {
   })
 
   afterEach(() => {
-    ;(window.URL.createObjectURL as jest.Mock).mockReset()
+    asMock(window.URL.createObjectURL).mockReset()
   })
 
   it('should let the user add period and ovulation events', async () => {

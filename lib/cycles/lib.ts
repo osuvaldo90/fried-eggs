@@ -3,7 +3,7 @@ import _, { last, mean, zip } from 'lodash'
 
 import { Period } from './types'
 
-const median = (nums: number[]) => {
+const calculateMedian = (nums: number[]) => {
   if (nums.length === 0) return 0
   if (nums.length === 1) return nums[0] as number
 
@@ -24,7 +24,7 @@ export const crunchPeriods = (periodHistory: Period[]) => {
     .sort()
     .value()
 
-  const medianCycleLength = median(cycleLengths)
+  const medianCycleLength = calculateMedian(cycleLengths)
 
   return {
     averageCycleLength: mean(cycleLengths),
