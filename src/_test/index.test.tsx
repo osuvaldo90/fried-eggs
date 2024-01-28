@@ -25,7 +25,6 @@ describe(Home, () => {
   })
 
   it('should display stats if there is period data', () => {
-    const x = asMock(useCycleLog)
     asMock(useCycleLog).mockReturnValue([
       [
         {
