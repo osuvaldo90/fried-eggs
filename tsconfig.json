@@ -16,6 +16,7 @@
     "incremental": true,
     "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true,
+    "noErrorTruncation": true,
     "plugins": [{ "name": "next" }]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".next/types/**/*.ts"],

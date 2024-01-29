@@ -3,7 +3,7 @@ import { isNil } from 'lodash'
 
 import { CycleLogEntry, LogEntryType, logEntryTypes } from './types'
 
-export const serializeCycleLog = (history: CycleLogEntry[]) =>
+export const serializeCycleLog = (history: readonly CycleLogEntry[]) =>
   JSON.stringify(
     history.map((entry) => ({
       ...entry,
@@ -36,7 +36,7 @@ const isJsonEntry = (x: unknown): x is JsonEntry =>
   (!('type' in x) ||
     (typeof x.type === 'string' && !!logEntryTypes.find((type) => type === x.type)))
 
-export const deserializeCycleLog = (data: string) => {
+export const deserializeCycleLog = (data: string): CycleLogEntry[] => {
   if (!data) {
     return []
   }
@@ -51,4 +51,19 @@ export const deserializeCycleLog = (data: string) => {
     type: 'type' in entry ? entry.type : ('period' as const),
     date: parse(entry.date, 'yyyy-MM-dd', new Date()),
   }))
+}
+
+export const loadCycleLog = () => {
+  if (global.window) {
+    const serializedCycleLog = global.window?.localStorage.getItem('cycleLog') ?? '[]'
+    return deserializeCycleLog(serializedCycleLog)
+  }
+  return []
+}
+
+export const saveCycleLog = (cycleLog: readonly CycleLogEntry[]) => {
+  if (global.window) {
+    const serializedCycleLog = serializeCycleLog(cycleLog)
+    global.window.localStorage.setItem('cycleLog', serializedCycleLog)
+  }
 }

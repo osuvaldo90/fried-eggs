@@ -1,20 +1,28 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 
+import { asMock } from '../../_test/util'
 import { AppProvider } from '../../lib/app-context'
-import { CycleLogEntry } from '../../lib/cycles/types'
 import { useCycleLog } from '../../lib/cycles/use-cycle-log'
 import Home from '../page'
 
-import { asMock } from './util'
-
 jest.mock('../../lib/cycles/use-cycle-log', () => ({
-  useCycleLog: jest.fn(() => [[] as CycleLogEntry[], jest.fn(), () => null] as const),
+  useCycleLog: jest.fn(() => ({
+    cycleLog: [],
+    addCycleLogEntry: jest.fn(),
+    deleteCycleLogEntry: jest.fn(),
+    overwriteCycleLog: jest.fn(),
+  })),
 }))
 
 describe(Home, () => {
   it('should display the default message', () => {
-    asMock(useCycleLog).mockReturnValue([[], jest.fn(), () => null])
+    asMock(useCycleLog).mockReturnValue({
+      cycleLog: [],
+      addCycleLogEntry: jest.fn(),
+      deleteCycleLogEntry: jest.fn(),
+      overwriteCycleLog: jest.fn(),
+    })
     render(
       <AppProvider>
         <Home />
@@ -25,17 +33,18 @@ describe(Home, () => {
   })
 
   it('should display stats if there is period data', () => {
-    asMock(useCycleLog).mockReturnValue([
-      [
+    asMock(useCycleLog).mockReturnValue({
+      cycleLog: [
         {
           id: '1',
           date: new Date(2024, 0, 1, 0),
           type: 'period',
         },
       ],
-      jest.fn(),
-      () => null,
-    ])
+      addCycleLogEntry: jest.fn(),
+      deleteCycleLogEntry: jest.fn(),
+      overwriteCycleLog: jest.fn(),
+    })
     render(
       <AppProvider>
         <Home />

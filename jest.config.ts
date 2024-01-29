@@ -2,16 +2,22 @@
  * For a detailed explanation regarding each configuration property, visit:
  * https://jestjs.io/docs/configuration
  */
-import type { Config } from 'jest'
 import nextJest from 'next/jest.js'
 
 const createJestConfig = nextJest({
   dir: './',
 })
 
-const config: Config = {
-  coverageProvider: 'v8',
-  testEnvironment: 'jsdom',
+const makeConfig = async () => {
+  const config = await createJestConfig({
+    testEnvironment: 'jsdom',
+    setupFilesAfterEnv: ['<rootDir>/src/_test/setup-tests.ts'],
+  })()
+
+  return {
+    ...config,
+    transformIgnorePatterns: ['^.+\\.module\\.(css|sass|scss)$', 'node_modules/(?!(nanoid)/)'],
+  }
 }
 
-export default createJestConfig(config)
+export default makeConfig

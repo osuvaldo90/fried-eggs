@@ -4,7 +4,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { differenceInDays, format, parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
-import _, { capitalize, last } from 'lodash'
+import _ from 'lodash'
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Fade, ListGroup, Modal } from 'react-bootstrap'
 import * as uuid from 'uuid'
@@ -12,9 +12,10 @@ import * as yup from 'yup'
 
 import { useAppContext } from '../../lib/app-context'
 import { AddLogEntryForm, AddLogEntryFormValues } from '../../lib/components/AddLogEntryForm'
-import { serializeCycleLog } from '../../lib/cycles/data'
+import { deserializeCycleLog, serializeCycleLog } from '../../lib/cycles/data'
 import { calculateDangerZoneFromOvulationDate, makePeriodEventsParams } from '../../lib/cycles/lib'
 import { CycleLogEntry, isPeriod, logEntryTypes } from '../../lib/cycles/types'
+import { useCycleLog } from '../../lib/cycles/use-cycle-log'
 
 const validationSchema = yup.object({
   logEntryType: yup
@@ -33,9 +34,8 @@ const validationSchema = yup.object({
 })
 
 const Cycles = () => {
+  const { cycleLog, addCycleLogEntry, deleteCycleLogEntry, overwriteCycleLog } = useCycleLog()
   const {
-    cycleLog,
-    updateCycleLog,
     calendarData,
     createFriedEggsCalendar,
     createPeriodEvents,
@@ -69,8 +69,7 @@ const Cycles = () => {
         date: parse(logEntryDate, 'yyyy-MM-dd', new Date()),
         notes: logEntryNotes,
       }
-
-      updateCycleLog({ type: 'add-log-entry', logEntry })
+      addCycleLogEntry(logEntry)
       setLastEntry(logEntry)
       resetForm({ values: { logEntryType, logEntryDate: '', logEntryNotes: '' } })
       setSubmitting(false)
@@ -87,7 +86,7 @@ const Cycles = () => {
         }
       }
     },
-    [calendarData, updateCycleLog, setNextAction],
+    [calendarData, addCycleLogEntry],
   )
 
   // wait until period history contains lastEntry so we get accurate next period start date
@@ -97,7 +96,7 @@ const Cycles = () => {
       if (!cycleLog.find((period) => period.id === lastEntry.id)) return
 
       const periodHistory = cycleLog.filter(isPeriod)
-      const lastPeriod = last(periodHistory)
+      const lastPeriod = _.last(periodHistory)
       const periodEventsParams = makePeriodEventsParams(periodHistory)
       const ovulationEventParams =
         lastEntry.type === 'ovulation'
@@ -169,11 +168,11 @@ const Cycles = () => {
       const file = event.target.files?.[0]
       if (file) {
         const data = await file.text()
-        updateCycleLog({ type: 'import', data })
+        overwriteCycleLog(deserializeCycleLog(data))
         importDataFileRef.current!.value = ''
       }
     },
-    [updateCycleLog],
+    [overwriteCycleLog],
   )
 
   const handleDeleteLogEntry = useCallback(
@@ -183,13 +182,13 @@ const Cycles = () => {
       if (entry) {
         await deleteLogEntryEvents(entry.id, entry.type)
       }
-      updateCycleLog({ type: 'delete-event', id: logEntryId })
+      deleteCycleLogEntry(logEntryId)
     },
-    [cycleLog, updateCycleLog, deleteLogEntryEvents],
+    [cycleLog, deleteLogEntryEvents, deleteCycleLogEntry],
   )
 
   let lastPeriodDate: Date | undefined = undefined
-  const reversedAndAugmentedHistory = [...cycleLog]
+  const reversedAndAugmentedHistory = cycleLog
     .map((entry) => {
       if (entry.type === 'period') {
         const daysSinceLastPeriod = lastPeriodDate
@@ -229,7 +228,7 @@ const Cycles = () => {
               <div className="me-2">{entry.type === 'ovulation' ? '🍳' : '🩸'}</div>
               <div>
                 <div className="h6">
-                  {capitalize(entry.type)} on {format(entry.date, 'MMMM do, yyyy')}
+                  {_.capitalize(entry.type)} on {format(entry.date, 'MMMM do, yyyy')}
                 </div>
                 <div style={{ whiteSpace: 'pre-wrap' }}>{entry.notes}</div>
                 {'daysSinceLastPeriod' in entry && entry.daysSinceLastPeriod && (
@@ -278,7 +277,10 @@ const Cycles = () => {
         )}
       </div>
 
-      <Modal show={showConnectGoogleModal} onHide={() => setShowConnectGoogleModal(false)}>
+      <Modal
+        show={showConnectGoogleModal}
+        onHide={creatingCalendar ? () => {} : () => setShowConnectGoogleModal(false)}
+      >
         <Modal.Body>
           Would you like to connect your Google calendar to automatically create danger zone events?
         </Modal.Body>

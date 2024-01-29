@@ -2,10 +2,9 @@ import '@testing-library/jest-dom'
 import { getByRole, getByText, render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
+import { asMock } from '../../_test/util'
 import { AppProvider } from '../../lib/app-context'
 import Cycles from '../cycles/page'
-
-import { asMock } from './util'
 
 const logEntry = async (type: 'period' | 'ovulation', date: string) => {
   const typeSwitchButton = screen.getByLabelText(type === 'period' ? 'Period' : 'Ovulation')
@@ -25,10 +24,6 @@ const logEntry = async (type: 'period' | 'ovulation', date: string) => {
 
 describe(Cycles, () => {
   window.URL.createObjectURL = jest.fn()
-
-  beforeEach(() => {
-    window.localStorage.clear()
-  })
 
   afterEach(() => {
     asMock(window.URL.createObjectURL).mockReset()

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, ReactNode, useContext, Dispatch, useCallback } from 'react'
+import { createContext, ReactNode, useContext, useCallback } from 'react'
 
 import { useGoogleAccessToken } from './calendar/use-google-access-token'
 import { useGapiClient } from './calendar/use-google-api'
@@ -10,12 +10,9 @@ import {
   NewPeriodEventsParams,
   useGoogleCalendar,
 } from './calendar/use-google-calendar'
-import { CycleLogEntry, LogEntryType } from './cycles/types'
-import { CycleLogAction, useCycleLog } from './cycles/use-cycle-log'
+import { LogEntryType } from './cycles/types'
 
 type AppContext = {
-  cycleLog: CycleLogEntry[]
-  updateCycleLog: Dispatch<CycleLogAction>
   getAccessToken: () => Promise<string>
   calendarData: CalendarDataReducerState
   createFriedEggsCalendar: (params: CreateFriedEggsCalendarParams) => Promise<void>
@@ -33,8 +30,6 @@ type AppContext = {
 }
 
 const AppContext = createContext<AppContext>({
-  cycleLog: [],
-  updateCycleLog: () => {},
   getAccessToken: async () => '',
   calendarData: 'loading',
   createFriedEggsCalendar: async () => {},
@@ -46,7 +41,6 @@ const AppContext = createContext<AppContext>({
 export const useAppContext = () => useContext(AppContext)
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [cycleLog, updateCycleLog] = useCycleLog()
   const { getAccessToken } = useGoogleAccessToken()
   const gapiClient = useGapiClient()
   const {
@@ -111,8 +105,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AppContext.Provider
       value={{
-        cycleLog,
-        updateCycleLog,
         getAccessToken,
         calendarData,
         createFriedEggsCalendar: createFriedEggsCalendarWrapper,

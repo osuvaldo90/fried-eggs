@@ -9,11 +9,13 @@ import { Button } from 'react-bootstrap'
 import { useAppContext } from '../lib/app-context'
 import { calculateDangerZone, crunchPeriods, makePeriodEventsParams } from '../lib/cycles/lib'
 import { isPeriod } from '../lib/cycles/types'
+import { useCycleLog } from '../lib/cycles/use-cycle-log'
 
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
 const Home = () => {
-  const { cycleLog, calendarData, createFriedEggsCalendar, createPeriodEvents } = useAppContext()
+  const { cycleLog } = useCycleLog()
+  const { calendarData, createFriedEggsCalendar, createPeriodEvents } = useAppContext()
 
   const periodHistory = cycleLog.filter(isPeriod)
   const statistics = crunchPeriods(periodHistory)
