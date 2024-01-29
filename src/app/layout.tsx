@@ -4,7 +4,6 @@ import '@fortawesome/fontawesome-svg-core/styles.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 import { config } from '@fortawesome/fontawesome-svg-core'
-import Head from 'next/head'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ReactNode } from 'react'
@@ -21,10 +20,10 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname()
   return (
     <html>
-      <Head>
+      <head>
         <title>Fried Eggs</title>
         <link rel="icon" href="/favicon.svg" />
-      </Head>
+      </head>
       <body>
         <Container fluid>
           <Row>
