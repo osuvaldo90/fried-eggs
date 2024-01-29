@@ -1,14 +1,14 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 
-import Home from '../app/page'
-import { AppProvider } from '../lib/app-context'
-import { CycleLogEntry } from '../lib/cycles/types'
-import { useCycleLog } from '../lib/cycles/use-cycle-log'
+import { AppProvider } from '../../lib/app-context'
+import { CycleLogEntry } from '../../lib/cycles/types'
+import { useCycleLog } from '../../lib/cycles/use-cycle-log'
+import Home from '../page'
 
 import { asMock } from './util'
 
-jest.mock('../lib/cycles/use-cycle-log', () => ({
+jest.mock('../../lib/cycles/use-cycle-log', () => ({
   useCycleLog: jest.fn(() => [[] as CycleLogEntry[], jest.fn(), () => null] as const),
 }))
 
