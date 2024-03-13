@@ -54,6 +54,11 @@ const Layout = ({ children }: { children: ReactNode }) => {
               <AppProvider>
                 {children}
 
+                <div>
+                  Questions or problems?{' '}
+                  <a href="mailto:osuvaldo.ramos@gmail.com?subject=Fried Eggs">Send me an email</a>!
+                </div>
+
                 {isDevelopment() && <DevTools className="mt-4 d-grid gap-1" />}
               </AppProvider>
             </Col>

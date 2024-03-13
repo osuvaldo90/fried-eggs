@@ -5,14 +5,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { differenceInDays, format, parse } from 'date-fns'
 import { Formik, FormikHelpers } from 'formik'
 import _, { capitalize, last } from 'lodash'
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button, Fade, ListGroup, Modal } from 'react-bootstrap'
 import * as uuid from 'uuid'
 import * as yup from 'yup'
 
 import { useAppContext } from '../../lib/app-context'
 import { AddLogEntryForm, AddLogEntryFormValues } from '../../lib/components/AddLogEntryForm'
-import { serializeCycleLog } from '../../lib/cycles/data'
 import { calculateDangerZoneFromOvulationDate, makePeriodEventsParams } from '../../lib/cycles/lib'
 import { CycleLogEntry, isPeriod, logEntryTypes } from '../../lib/cycles/types'
 
@@ -43,20 +42,12 @@ const Cycles = () => {
     updateDangerZoneEvent,
   } = useAppContext()
   const [showSavedToast, setShowSavedToast] = useState(false)
-  const [downloadUrl, setDownloadUrl] = useState<string | undefined>()
-  const importDataFileRef = useRef<HTMLInputElement | null>(null)
-  const downloadDataRef = useRef<HTMLAnchorElement>(null)
   const [lastEntry, setLastEntry] = useState<CycleLogEntry>()
   const [showConnectGoogleModal, setShowConnectGoogleModal] = useState(false)
   const [creatingCalendar, setCreatingCalendar] = useState(false)
   const [nextAction, setNextAction] = useState<
     'create-calendar' | 'create-period-events' | 'update-danger-zone-event'
   >()
-
-  useEffect(() => {
-    const blob = new Blob([serializeCycleLog(cycleLog)], { type: 'application/octet-stream' })
-    setDownloadUrl(URL.createObjectURL(blob))
-  }, [cycleLog])
 
   const handleSubmit = useCallback(
     async (
@@ -158,24 +149,6 @@ const Cycles = () => {
     updateDangerZoneEvent,
   ])
 
-  const promptImportDataFile = () => {
-    if (importDataFileRef.current) {
-      importDataFileRef.current.click()
-    }
-  }
-
-  const handleFileUpload = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0]
-      if (file) {
-        const data = await file.text()
-        updateCycleLog({ type: 'import', data })
-        importDataFileRef.current!.value = ''
-      }
-    },
-    [updateCycleLog],
-  )
-
   const handleDeleteLogEntry = useCallback(
     async (logEntryId: string) => {
       const entry = cycleLog.find(({ id }) => id === logEntryId)
@@ -247,36 +220,6 @@ const Cycles = () => {
           ))}
         </ListGroup>
       )}
-
-      <div className="d-grid">
-        {reversedAndAugmentedHistory.length > 0 && downloadUrl ? (
-          <>
-            <a
-              ref={downloadDataRef}
-              style={{ display: 'none' }}
-              download={`fried-eggs-${new Date().valueOf()}.json`}
-              href={downloadUrl}
-            />
-            <Button
-              onClick={() => {
-                downloadDataRef.current?.click()
-              }}
-            >
-              Download your data
-            </Button>
-          </>
-        ) : (
-          <>
-            <input
-              ref={importDataFileRef}
-              style={{ display: 'none' }}
-              type="file"
-              onChange={handleFileUpload}
-            />
-            <Button onClick={promptImportDataFile}>Import data</Button>
-          </>
-        )}
-      </div>
 
       <Modal show={showConnectGoogleModal} onHide={() => setShowConnectGoogleModal(false)}>
         <Modal.Body>
