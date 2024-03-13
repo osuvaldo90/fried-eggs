@@ -4,6 +4,8 @@ import '@fortawesome/fontawesome-svg-core/styles.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 import { config } from '@fortawesome/fontawesome-svg-core'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ReactNode } from 'react'
@@ -57,6 +59,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
             </Col>
           </Row>
         </Container>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
