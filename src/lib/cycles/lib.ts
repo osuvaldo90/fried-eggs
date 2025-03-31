@@ -59,6 +59,9 @@ export const makePeriodEventsParams = (periodHistory: Period[]) => {
       start: dangerZone.start,
       end: dangerZone.end,
     },
-    nextPeriodStart,
+    nextPeriod: {
+      start: nextPeriodStart,
+      end: addDays(nextPeriodStart, 5),
+    },
   }
 }

@@ -39,7 +39,10 @@ export const useGoogleAccessToken = () => {
     element?.parentNode?.insertBefore(gsi, element)
     gsi.onload = () => {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-      if (!clientId) return
+      if (!clientId) {
+        console.warn('No Google client ID provided')
+        return
+      }
 
       const newTokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: clientId,

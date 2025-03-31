@@ -49,7 +49,10 @@ export type NewPeriodEventsParams = {
     start: Date
     end: Date
   }
-  nextPeriodStart?: Date
+  nextPeriod?: {
+    start: Date
+    end: Date
+  }
 }
 
 export type NewOvulationEventParams = {
@@ -211,7 +214,7 @@ export const useGoogleCalendar = (): {
     async (
       gapiClient: typeof gapi.client,
       calendarId: string,
-      { periodId, dangerZone, nextPeriodStart }: NewPeriodEventsParams,
+      { periodId, dangerZone, nextPeriod }: NewPeriodEventsParams,
     ) => {
       if (dangerZone) {
         await createDangerZoneEvent(gapiClient, calendarId, {
@@ -220,16 +223,16 @@ export const useGoogleCalendar = (): {
         })
       }
 
-      if (nextPeriodStart) {
+      if (nextPeriod) {
         const nextPeriodEventRequest = {
           calendarId,
           resource: {
             summary: '🩸🍳🩸',
             start: {
-              date: format(nextPeriodStart, 'yyyy-MM-dd'),
+              date: format(nextPeriod.start, 'yyyy-MM-dd'),
             },
             end: {
-              date: format(nextPeriodStart, 'yyyy-MM-dd'),
+              date: format(nextPeriod.end, 'yyyy-MM-dd'),
             },
           },
         }
