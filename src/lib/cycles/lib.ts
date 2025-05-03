@@ -63,5 +63,9 @@ export const makePeriodEventsParams = (periodHistory: Period[]) => {
       start: nextPeriodStart,
       end: addDays(nextPeriodStart, 5),
     },
+    pms: {
+      start: subDays(nextPeriodStart, 6),
+      end: nextPeriodStart,
+    },
   }
 }

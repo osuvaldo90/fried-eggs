@@ -28,6 +28,11 @@ type CalendarDataAction =
       eventId: string
     }
   | {
+      type: 'new-pms-event'
+      periodId: string
+      eventId: string
+    }
+  | {
       type: 'update-danger-zone-event'
       eventId: string
       ovulationId?: string
@@ -50,6 +55,10 @@ export type NewPeriodEventsParams = {
     end: Date
   }
   nextPeriod?: {
+    start: Date
+    end: Date
+  }
+  pms?: {
     start: Date
     end: Date
   }
@@ -124,6 +133,18 @@ const calendarDataReducer = (current: CalendarDataReducerState, action: Calendar
     return newCalendarData
   }
 
+  if (action.type === 'new-pms-event') {
+    const newCalendarData: CalendarData = {
+      ...current,
+      pmsEvents: [
+        ...(current.pmsEvents ?? []),
+        { periodId: action.periodId, eventId: action.eventId },
+      ],
+    }
+    window.localStorage.setItem('calendarData', serializeCalendarData(newCalendarData))
+    return newCalendarData
+  }
+
   if (action.type === 'delete-events') {
     const newCalendarData: CalendarData = {
       ...current,
@@ -133,6 +154,7 @@ const calendarDataReducer = (current: CalendarDataReducerState, action: Calendar
       nextPeriodEvents: current.nextPeriodEvents?.filter(
         (event) => !action.eventIds.includes(event.eventId),
       ),
+      pmsEvents: current.pmsEvents?.filter((event) => !action.eventIds.includes(event.eventId)),
     }
     window.localStorage.setItem('calendarData', serializeCalendarData(newCalendarData))
     return newCalendarData
@@ -214,7 +236,7 @@ export const useGoogleCalendar = (): {
     async (
       gapiClient: typeof gapi.client,
       calendarId: string,
-      { periodId, dangerZone, nextPeriod }: NewPeriodEventsParams,
+      { periodId, dangerZone, nextPeriod, pms }: NewPeriodEventsParams,
     ) => {
       if (dangerZone) {
         await createDangerZoneEvent(gapiClient, calendarId, {
@@ -243,6 +265,28 @@ export const useGoogleCalendar = (): {
           type: 'new-next-period-event',
           periodId,
           eventId: nextPeriodEventResponse.result.id as string,
+        })
+      }
+
+      if (pms) {
+        const pmsEventRequest = {
+          calendarId,
+          resource: {
+            summary: '⚠️😖⚠️',
+            start: {
+              date: format(pms.start, 'yyyy-MM-dd'),
+            },
+            end: {
+              date: format(pms.end, 'yyyy-MM-dd'),
+            },
+          },
+        }
+        const pmsEventResponse = await gapiClient.calendar.events.insert(pmsEventRequest)
+
+        updateCalendarData({
+          type: 'new-pms-event',
+          periodId,
+          eventId: pmsEventResponse.result.id as string,
         })
       }
     },
@@ -283,9 +327,21 @@ export const useGoogleCalendar = (): {
         })
       }
 
+      const pmsEventId = calendarData.pmsEvents?.find(
+        (e) => logEntryType === 'period' && e.periodId === logEntryId,
+      )?.eventId
+
+      if (pmsEventId) {
+        // @ts-expect-error not defining delete because lazy
+        await gapiClient.calendar.events.delete({
+          calendarId: calendarData.calendarId,
+          eventId: pmsEventId,
+        })
+      }
+
       updateCalendarData({
         type: 'delete-events',
-        eventIds: [dangerZoneEventId, nextPeriodEventId].filter(isNotNil),
+        eventIds: [dangerZoneEventId, nextPeriodEventId, pmsEventId].filter(isNotNil),
       })
     },
     [calendarData],

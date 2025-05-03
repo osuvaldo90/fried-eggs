@@ -9,4 +9,8 @@ export type CalendarData = {
     periodId: string
     eventId: string
   }>
+  pmsEvents?: Array<{
+    periodId: string
+    eventId: string
+  }>
 }
