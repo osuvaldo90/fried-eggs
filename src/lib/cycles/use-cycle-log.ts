@@ -20,6 +20,10 @@ export type CycleLogAction =
       type: 'import'
       data: string
     }
+  | {
+      type: 'merge-import'
+      data: CycleLogEntry[]
+    }
 
 export const useCycleLog = () => {
   const [cycleLog, updateCycleLog] = useReducer<
@@ -66,6 +70,22 @@ export const useCycleLog = () => {
         const deserialized = sortBy(deserializeCycleLog(action.data), (entry) => entry.date)
         window.localStorage.setItem('cycleLog', serializeCycleLog(deserialized))
         return deserialized
+      }
+
+      if (action.type === 'merge-import') {
+        const importedData = action.data
+        const existingIds = new Set(current.map((entry) => entry.id))
+
+        // Check for ID conflicts
+        const hasConflicts = importedData.some((entry) => existingIds.has(entry.id))
+        if (hasConflicts) {
+          throw new Error('Import data contains conflicting IDs')
+        }
+
+        // Merge data
+        const mergedData = sortBy([...current, ...importedData], (entry) => entry.date)
+        window.localStorage.setItem('cycleLog', serializeCycleLog(mergedData))
+        return mergedData
       }
 
       return []

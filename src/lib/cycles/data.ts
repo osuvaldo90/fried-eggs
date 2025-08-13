@@ -42,11 +42,16 @@ export const deserializeCycleLog = (data: string) => {
   }
 
   const parsed = JSON.parse(data)
-  if (!Array.isArray(parsed)) {
-    return []
+  return validateAndConvertCycleLog(parsed)
+}
+
+// New function to validate and convert parsed cycle log objects
+export const validateAndConvertCycleLog = (data: unknown): CycleLogEntry[] => {
+  if (!Array.isArray(data)) {
+    throw new Error('Cycle log must be an array')
   }
 
-  return parsed.filter(isJsonEntry).map((entry) => ({
+  return data.filter(isJsonEntry).map((entry) => ({
     ...entry,
     type: 'type' in entry ? entry.type : ('period' as const),
     date: parse(entry.date, 'yyyy-MM-dd', new Date()),

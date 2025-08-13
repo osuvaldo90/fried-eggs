@@ -42,6 +42,10 @@ type CalendarDataAction =
       type: 'delete-events'
       eventIds: string[]
     }
+  | {
+      type: 'import'
+      data: CalendarData
+    }
 
 export type CreateFriedEggsCalendarParams = {
   periodEventsParams?: NewPeriodEventsParams
@@ -105,6 +109,11 @@ const calendarDataReducer = (current: CalendarDataReducerState, action: Calendar
     const newCalendarData = { calendarId: action.calendarId, dangerZoneEvents: [] }
     window.localStorage.setItem('calendarData', serializeCalendarData(newCalendarData))
     return newCalendarData
+  }
+
+  if (action.type === 'import') {
+    window.localStorage.setItem('calendarData', serializeCalendarData(action.data))
+    return action.data
   }
 
   if (typeof current !== 'object') throw new Error('calendar data not ready')
@@ -187,6 +196,7 @@ export const useGoogleCalendar = (): {
   createPeriodEvents: CreatePeriodEvents
   deleteLogEntryEvents: DeleteLogEntryEvents
   updateDangerZoneEvent: UpdateDangerZoneEvent
+  importCalendarData: (data: CalendarData) => void
 } => {
   const [calendarData, updateCalendarData] = useReducer<
     Reducer<CalendarDataReducerState, CalendarDataAction>
@@ -419,6 +429,10 @@ export const useGoogleCalendar = (): {
     [calendarData, createDangerZoneEvent],
   )
 
+  const importCalendarData = useCallback((data: CalendarData) => {
+    updateCalendarData({ type: 'import', data })
+  }, [])
+
   useEffect(() => {
     updateCalendarData({ type: 'load' })
   }, [])
@@ -429,5 +443,6 @@ export const useGoogleCalendar = (): {
     createPeriodEvents,
     deleteLogEntryEvents,
     updateDangerZoneEvent,
+    importCalendarData,
   }
 }

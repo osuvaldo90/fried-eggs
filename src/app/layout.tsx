@@ -54,7 +54,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
               <AppProvider>
                 {children}
 
-                <div>
+                <div className="mt-2">
                   Questions or problems?{' '}
                   <a href="mailto:osuvaldo.ramos@gmail.com?subject=Fried Eggs">Send me an email</a>!
                 </div>

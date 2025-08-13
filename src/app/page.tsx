@@ -3,8 +3,8 @@
 import { format } from 'date-fns'
 import { last } from 'lodash'
 import Link from 'next/link'
-import { useCallback } from 'react'
-import { Button } from 'react-bootstrap'
+import { useCallback, useRef, useState } from 'react'
+import { Alert, Button } from 'react-bootstrap'
 
 import { useAppContext } from '../lib/app-context'
 import { calculateDangerZone, crunchPeriods, makePeriodEventsParams } from '../lib/cycles/lib'
@@ -13,7 +13,19 @@ import { isPeriod } from '../lib/cycles/types'
 const formatDate = (date: Date) => format(date, 'MMMM do')
 
 const Home = () => {
-  const { cycleLog, calendarData, createFriedEggsCalendar, createPeriodEvents } = useAppContext()
+  const {
+    cycleLog,
+    calendarData,
+    createFriedEggsCalendar,
+    createPeriodEvents,
+    exportData,
+    importData,
+  } = useAppContext()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importStatus, setImportStatus] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
 
   const periodHistory = cycleLog.filter(isPeriod)
   const statistics = crunchPeriods(periodHistory)
@@ -51,6 +63,35 @@ const Home = () => {
     hasNextPeriodEvent,
     hasDangerZoneEvent,
   ])
+
+  const handleImport = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      setImportStatus(null)
+      try {
+        await importData(file)
+        setImportStatus({ type: 'success', message: 'Data imported successfully!' })
+      } catch (error) {
+        console.error('Import error:', error)
+        setImportStatus({
+          type: 'error',
+          message: error instanceof Error ? error.message : 'Import failed',
+        })
+      }
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    },
+    [importData],
+  )
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
 
   return (
     <div data-testid="stats">
@@ -118,6 +159,33 @@ const Home = () => {
           <span className="fw-bold">{Math.round(statistics.medianCycleLength)} days</span>
         </p>
       )}
+
+      {importStatus && (
+        <Alert
+          variant={importStatus.type === 'success' ? 'success' : 'danger'}
+          dismissible
+          onClose={() => setImportStatus(null)}
+          className="mt-3"
+        >
+          {importStatus.message}
+        </Alert>
+      )}
+
+      <div className="mt-4 d-grid gap-1">
+        <Button variant="outline-primary" onClick={exportData}>
+          Export Data
+        </Button>
+        <Button variant="outline-primary" onClick={handleImportClick}>
+          Import Data
+        </Button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImport}
+          accept=".json"
+          style={{ display: 'none' }}
+        />
+      </div>
     </div>
   )
 }
